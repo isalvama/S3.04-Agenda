@@ -1,4 +1,4 @@
-package com.agenda.task.respository;
+package com.agenda.task.repository;
 
 import com.agenda.task.model.Task;
 import java.util.List;

@@ -137,6 +137,7 @@ public class TaskRepositoryImpl implements TaskRepository {
                 rs.getTimestamp("expiration_date").toLocalDateTime(),
                 rs.getTimestamp("created_at").toLocalDateTime(),
                 rs.getTimestamp("updated_at").toLocalDateTime(),
+                // rs.getLong() returns 0 for SQL NULL - use getObject() to detect true null
                 rs.getObject("event_id") != null ? rs.getLong("event_id") : null);
     }
 }

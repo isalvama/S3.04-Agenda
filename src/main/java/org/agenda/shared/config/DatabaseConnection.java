@@ -16,8 +16,8 @@ public class DatabaseConnection {
             "jdbc:mysql://%s:%s/%s?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC",
             getEnv("DB_HOST", "localhost"),
             getEnv("DB_PORT", "3306"),
-            getEnv("DB_NAME", "agenda"));
-
+            getEnv("DB_NAME", "agenda")
+    );
     private static final String DB_USER = getEnv("DB_USER", "root");
     private static final String DB_PASS = getEnv("DB_PASS", "password");
 
@@ -30,11 +30,13 @@ public class DatabaseConnection {
 
         for (int attempt = 1; attempt <= MAX_RETRIES; attempt++) {
             try {
-                System.out.printf("[DB] attemp %d/%d - Connecting to %s%n", attempt, MAX_RETRIES, DB_URL);
+                System.out.printf("[DB] Attempt %d/%d — Connecting to %s%n",
+                        attempt, MAX_RETRIES, DB_URL);
                 return DriverManager.getConnection(DB_URL, DB_USER, DB_PASS);
             } catch (SQLException e) {
                 lastException = e;
-                System.err.printf("[DB] Failed on attempt %d: %s%n", attempt, e.getMessage());
+                System.err.printf("[DB] Failed on attempt %d: %s%n",
+                        attempt, e.getMessage());
 
                 if (attempt < MAX_RETRIES) {
                     try {
@@ -46,7 +48,10 @@ public class DatabaseConnection {
                 }
             }
         }
-        throw new SQLException("Critical: Database unreachable after " + MAX_RETRIES + " attempts", lastException);
+        throw new SQLException(
+                "Critical: Database unreachable after " + MAX_RETRIES + " attempts.",
+                lastException
+        );
     }
 
     public static synchronized DatabaseConnection getInstance() throws SQLException {

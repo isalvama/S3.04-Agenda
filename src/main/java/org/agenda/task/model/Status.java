@@ -1,7 +1,6 @@
 package org.agenda.task.model;
 
 import java.util.Arrays;
-import java.util.Optional;
 
 public enum Status {
     PENDING("PENDING"),

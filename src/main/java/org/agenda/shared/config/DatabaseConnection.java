@@ -30,7 +30,7 @@ public class DatabaseConnection {
 
         for (int attempt = 1; attempt <= MAX_RETRIES; attempt++) {
             try {
-                System.out.printf("[DB] attemp %d/%d - Connecting to %s%n", attempt, MAX_RETRIES, DB_URL);
+                System.out.printf("[DB] attempt %d/%d - Connecting to %s%n", attempt, MAX_RETRIES, DB_URL);
                 return DriverManager.getConnection(DB_URL, DB_USER, DB_PASS);
             } catch (SQLException e) {
                 lastException = e;

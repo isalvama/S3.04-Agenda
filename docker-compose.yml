@@ -12,15 +12,16 @@ services:
       - "${MYSQL_PORT}:3306"
     volumes:
       - mysql-data:/var/lib/mysql
-      - ./sql/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+      - ./sql/init.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
+      - ./sql/seed.sql:/docker-entrypoint-initdb.d/02-seed.sql:ro
     networks:
       - agenda-network
     healthcheck:
-      test: [ "CMD-SHELL", "mysqladmin ping -h localhost -u $$MYSQL_USER --password=$$MYSQL_PASSWORD" ]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 30s
+      test: [ "CMD-SHELL", "mysqladmin ping -h localhost -u root --password=$$MYSQL_ROOT_PASSWORD" ]
+      interval: 15s
+      timeout: 10s
+      retries: 20
+      start_period: 120s
 
   adminer:
     image: adminer:4

@@ -1,3 +1,5 @@
 package org.agenda.event.dto;
 
-public record EventRequest(String description, String repetition) { }
+import java.time.LocalDateTime;
+
+public record EventRequest(String title, String description, LocalDateTime date, String type, String eventSchedule){}

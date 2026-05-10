@@ -15,16 +15,16 @@ public class CalendarEvent {
     private EventType type;
     private EventSchedule schedule;
 
-    public CalendarEvent(int id, Title title, String description, LocalDateTime date, EventType type, EventSchedule schedule) {
+    public CalendarEvent(int id, Title title, Description description, LocalDateTime date, EventType type, EventSchedule schedule) {
         this.id = id;
         this.title = Objects.requireNonNull(title, "event title can not be null");
-        this.description = (description != null && !description.isBlank()) ? Description.of(description) : null ;
+        this.description = description;
         this.date = Objects.requireNonNull(date, "event date can not be null");
         this.type = Objects.requireNonNull(type, "event type can not be null");
         this.schedule = schedule;
     }
 
-    public static CalendarEvent create(Title title, String description, LocalDateTime date, EventType type, EventSchedule schedule) {
+    public static CalendarEvent create(Title title, Description description, LocalDateTime date, EventType type, EventSchedule schedule) {
         return new CalendarEvent(
                 0,
                 title,
@@ -52,12 +52,12 @@ public class CalendarEvent {
         this.title = title;
     }
 
-    public Optional<Description> getDescription() {
-        return Optional.ofNullable(description);
+    public Description getDescription() {
+        return description;
     }
 
-    public void setDescription(String description) {
-        this.description = (description != null && !description.isBlank()) ? Description.of(description) : null;
+    public void setDescription(Description description) {
+        this.description = description;
     }
 
     public LocalDateTime getDate() {

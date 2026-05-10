@@ -1,6 +1,7 @@
 package org.agenda.shared.domain.value_object;
 
 import org.agenda.shared.domain.exception.InvalidDescriptionException;
+import org.jetbrains.annotations.NotNull;
 
 public record Description(String value) {
     private static final int MIN_LENGTH = 2;
@@ -24,8 +25,9 @@ public record Description(String value) {
         return new Description(value);
     }
 
+    @NotNull
     @Override
-    public String toString() {
+    public String value() {
         return value;
     }
 }

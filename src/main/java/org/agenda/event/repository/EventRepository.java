@@ -8,9 +8,9 @@ import java.util.List;
 import java.util.Optional;
 
 public interface EventRepository {
-    CalendarEvent save(CalendarEvent event
-            //, DataSource dataSource, String schema
-              );
+    CalendarEvent save(CalendarEvent event);
+    CalendarEvent update(CalendarEvent event);
+    void delete(int id);
     Optional<CalendarEvent> findById(int id);
-    List<CalendarEvent> findAll();
+    Optional<List<CalendarEvent>> findAll();
 }

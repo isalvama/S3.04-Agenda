@@ -83,4 +83,16 @@ public class CalendarEvent {
     public void setSchedule(EventSchedule schedule) {
         this.schedule = schedule;
     }
+
+    @Override
+    public String toString() {
+        return "CalendarEvent{" +
+                "id=" + id +
+                ", title=" + title +
+                ", description=" + description +
+                ", date=" + date +
+                ", type=" + type +
+                ", schedule=" + schedule +
+                '}';
+    }
 }

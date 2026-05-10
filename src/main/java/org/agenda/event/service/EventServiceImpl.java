@@ -1,5 +1,6 @@
 package org.agenda.event.service;
 
+import com.mysql.cj.xdevapi.Warning;
 import org.agenda.event.dto.EventRequest;
 import org.agenda.event.dto.EventResponse;
 import org.agenda.event.model.CalendarEvent;
@@ -8,8 +9,10 @@ import org.agenda.event.model.EventType;
 import org.agenda.event.repository.EventRepository;
 import org.agenda.shared.domain.value_object.Title;
 
+import java.sql.SQLException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.List;
 
 import static java.util.Objects.requireNonNull;
 
@@ -23,10 +26,10 @@ public class EventServiceImpl implements EventService{
 
     @Override
     public EventResponse createEvent(EventRequest eventRequest) {
-        EventResponse response = new EventResponse(false, "", new ArrayList<>());
+        List<String> warnings = new ArrayList<>();
 
         if (eventRequest.date().isBefore(LocalDateTime.now())) {
-            response.addWarnings("");
+            warnings.add("Note: this event date is in the past");
         }
 
         CalendarEvent event = CalendarEvent.create(
@@ -36,31 +39,8 @@ public class EventServiceImpl implements EventService{
                 EventType.valueOf(eventRequest.type()),
                 EventSchedule.valueOf(eventRequest.eventSchedule())
         );
-
-        //eventRepository.save(event);
-        return response;
+        event = eventRepository.save(event);
+        return new EventResponse(event.getId(), event.getTitle().value(), warnings);
     }
-        /**
-         *         Artist artist = Artist.create(
-         *                 promoterId,
-         *                 Name.of(command.name()),
-         *                 City.of(command.origin()),
-         *                 genres,
-         *                 imageAssetId,
-         *                 Description.of(command.bio()),
-         *                 ArtistStatus.valueOf(command.status()),
-         *                 ArtistFee.of(command.fee()),
-         *                 FollowerCount.of(command.followers()),
-         *                 tags,
-         *                 ArtistContact.of(command.contact()),
-         *                 SocialLinks.of(command.instagramUrl(), command.spotifyUrl())
-         *         );
-         *
-         *         return artistRepository.save(artist);
-         *     }
-         *
-         *
-         *
-         *
-         */
+
 }

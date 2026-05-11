@@ -249,7 +249,6 @@ public class TaskServiceTest {
             @DisplayName("delete: null id throws NullPointerException")
             void deleteNotFoundThrows() {
                 when(repository.existsById(99L)).thenReturn(false);
-
                 assertThrows(TaskNotFoundException.class, () -> service.delete(99L));
                 verify(repository, times(1)).existsById(99L);
                 verify(repository, never()).deleteById(any());

@@ -5,6 +5,7 @@ import org.agenda.task.dto.TaskResponse;
 import org.agenda.task.model.Status;
 import org.agenda.task.model.Task;
 import org.agenda.task.repository.TaskRepository;
+import org.agenda.task.service.strategy.TaskStrategy;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -110,5 +111,10 @@ public class TaskServiceImpl implements TaskService {
         if (request.title() == null || request.title().isBlank()) {
             throw new IllegalArgumentException("Task title is mandatory");
         }
+    }
+
+    @Override
+    public List<TaskResponse> listTasks(TaskStrategy strategy) {
+        return strategy.execute();
     }
 }

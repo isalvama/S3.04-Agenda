@@ -4,7 +4,9 @@ import org.agenda.task.dto.TaskRequest;
 import org.agenda.task.dto.TaskResponse;
 import org.agenda.task.model.Priority;
 import org.agenda.task.model.Status;
+import org.agenda.task.repository.TaskRepository;
 import org.agenda.task.service.TaskService;
+import org.agenda.task.service.strategy.*;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -16,11 +18,17 @@ public class TaskController {
 
     private final TaskService taskService;
     private final Scanner scanner;
+    private final TaskStrategy listAllStrategy;
+    private final TaskStrategy listPendingStrategy;
+    private final TaskStrategy listCompletedStrategy;
     private static final DateTimeFormatter DATE_FORMAT = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
 
-    public TaskController(TaskService taskService, Scanner scanner) {
+    public TaskController(TaskService taskService, TaskRepository repository, Scanner scanner) {
         this.taskService = taskService;
         this.scanner = scanner;
+        this.listAllStrategy = new ListAllStrategy(repository);
+        this.listPendingStrategy = new ListPendingStrategy(repository);
+        this.listCompletedStrategy = new ListCompletedStrategy(repository);
     }
 
     public void showMenu() {
@@ -90,7 +98,7 @@ public class TaskController {
 
     private void listAllTasks() {
         System.out.println("\n--- All Tasks ---");
-        List<TaskResponse> tasks = taskService.getAll();
+        List<TaskResponse> tasks = taskService.listTasks(listAllStrategy);
         if (tasks.isEmpty()) {
             System.out.println("No tasks found.");
             return;
@@ -100,7 +108,7 @@ public class TaskController {
 
     private void listPendingTasks() {
         System.out.println("\n--- Pending Tasks ---");
-        List<TaskResponse> tasks = taskService.getPendingTasks();
+        List<TaskResponse> tasks = taskService.listTasks(listPendingStrategy);
         if (tasks.isEmpty()) {
             System.out.println("No pending tasks.");
             return;
@@ -110,7 +118,7 @@ public class TaskController {
 
     private void listCompletedTasks() {
         System.out.println("\n--- Completed Tasks ---");
-        List<TaskResponse> tasks = taskService.getCompletedTasks();
+        List<TaskResponse> tasks = taskService.listTasks(listCompletedStrategy);
         if (tasks.isEmpty()) {
             System.out.println("No completed tasks.");
             return;

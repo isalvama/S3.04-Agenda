@@ -1,7 +1,6 @@
 package org.agenda.event.service;
 
 import org.agenda.event.dto.CreateEventRequest;
-import org.agenda.event.dto.DeleteEventRequest;
 import org.agenda.event.dto.EventResponse;
 import org.agenda.event.dto.UpdateEventRequest;
 import org.agenda.event.model.CalendarEvent;
@@ -12,9 +11,11 @@ import org.agenda.event.repository.EventRepository;
 import org.agenda.shared.domain.value_object.Description;
 import org.agenda.shared.domain.value_object.Title;
 
+import javax.swing.text.html.Option;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 import static java.util.Objects.requireNonNull;
 
@@ -28,70 +29,77 @@ public class EventServiceImpl implements EventService{
 
     @Override
     public EventResponse createEvent(CreateEventRequest eventRequest) {
-        List<String> warnings = new ArrayList<>();
-
-        if (eventRequest.date().isBefore(LocalDateTime.now())) {
-            warnings.add("Note: this event date is in the past");
-        }
 
         CalendarEvent event = CalendarEvent.create(
                 Title.of(eventRequest.title()),
-                Description.of(eventRequest.description()),
+                eventRequest.description() != null ? Description.of(eventRequest.description()) : null,
                 eventRequest.date(),
-                EventType.valueOf(eventRequest.type()),
-                EventSchedule.valueOf(eventRequest.eventSchedule())
+                eventRequest.type() != null ? EventType.valueOf(eventRequest.type()) : EventType.OTHER ,
+                eventRequest.eventSchedule() != null ? EventSchedule.valueOf(eventRequest.eventSchedule()) : null
         );
+
         event = eventRepository.save(event);
-        return new EventResponse(event.getId(), event.getTitle().value(), warnings);
+
+        List<String> warnings = new ArrayList<>();
+        event.checkIfDateIsInThePast(LocalDateTime.now()).ifPresent(warnings::add);
+
+        return toResponseModel(event, warnings);
     }
 
     @Override
-    public void deleteEvent(DeleteEventRequest deleteEventRequest) {
-        final CalendarEvent event = eventRepository.findById(deleteEventRequest.id())
-                .orElseThrow(() -> new EventNotFoundException(deleteEventRequest.id()));
+    public boolean deleteEvent(int id) {
+        eventRepository.findById(id)
+                .orElseThrow(() -> new EventNotFoundException("Delete", id));
 
-        eventRepository.delete(deleteEventRequest.id());
-
-        new EventResponse(event.getId(), event.getTitle().value(), null);
+       return eventRepository.deleteById(id);
     }
 
     @Override
-    public List<CalendarEvent> listEvents() {
-        return List.of();
+    public List<EventResponse> listAllEvents() {
+        return toResponseModel(eventRepository.findAll(), null);
+    }
+
+    @Override
+    public List<EventResponse> listUpcomingEvents(int intervalDays) {
+        return toResponseModel(eventRepository.findUpcomingEvents(intervalDays), null);
     }
 
     @Override
     public EventResponse updateEvent(UpdateEventRequest eventRequest) {
-        List<String> warnings = new ArrayList<>();
         final CalendarEvent event = eventRepository.findById(eventRequest.id())
-                .orElseThrow(() -> new EventNotFoundException(eventRequest.id()));
+                .orElseThrow(() -> new EventNotFoundException("Update", eventRequest.id()));
 
-        if (eventRequest.title() != null) {
-            event.setTitle(eventRequest.title());
-        }
+        Optional.ofNullable(eventRequest.title()).ifPresent(title -> event.setTitle(Title.of(title)));
+        Optional.ofNullable(eventRequest.description()).ifPresent(desc -> event.setDescription(Description.of(desc)));
 
-        if (eventRequest.description() != null) {
-            event.setDescription(eventRequest.description());
-        }
-
+        List<String> warnings = new ArrayList<>();
         if (eventRequest.date() != null) {
             event.setDate(eventRequest.date());
-            if (event.getDate().isBefore(LocalDateTime.now())) {
-                warnings.add("Note: this event date is in the past");
-            }
+            event.checkIfDateIsInThePast(LocalDateTime.now()).ifPresent(warnings::add);
         }
 
-        if (eventRequest.type() != null) {
-            event.setType(EventType.valueOf(eventRequest.type()));
-        }
+        Optional.ofNullable(eventRequest.type()).ifPresent(type -> event.setType(EventType.valueOf(type)));
+        Optional.ofNullable(eventRequest.eventSchedule()).ifPresent(schedule -> event.setSchedule(EventSchedule.valueOf(schedule)));
 
-        if (eventRequest.eventSchedule() != null) {
-            event.setSchedule(EventSchedule.valueOf(eventRequest.eventSchedule()));
-        }
+        eventRepository.updateById(event);
 
-        eventRepository.update(event);
-
-        return new EventResponse(event.getId(), event.getTitle().value(), warnings); //TODO REVIEW
+        return toResponseModel(event, warnings);
     }
 
+    private EventResponse toResponseModel(CalendarEvent event, List<String> warnings){
+        return new EventResponse(
+                event.getId(),
+                event.getTitle().value(),
+                event.getDate(),
+                warnings
+        );
+    }
+
+    private List<EventResponse> toResponseModel(List<CalendarEvent> events, List<String> warnings){
+        List<EventResponse> response = new ArrayList<>();
+        for (CalendarEvent event : events){
+            response.add(toResponseModel(event, warnings));
+        }
+        return response;
+    }
 }

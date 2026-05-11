@@ -1,7 +1,7 @@
 package org.agenda.event.repository;
 
 public class EventNotFoundException extends RuntimeException {
-    public EventNotFoundException(int id) {
-        super("event with id " + id + "does not exist");
+    public EventNotFoundException(String failedPerformance, int id) {
+        super(String.format("Failed %s: Event with id %s not found", failedPerformance, id));
     }
 }

@@ -54,6 +54,6 @@ class DescriptionTest {
     void toStringShouldReturnValue() {
         String text = "My Description";
         Description desc = Description.of(text);
-        assertEquals(text, desc.toString());
+        assertEquals(text, desc.value());
     }
 }

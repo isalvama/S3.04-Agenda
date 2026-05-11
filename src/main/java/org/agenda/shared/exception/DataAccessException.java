@@ -1,4 +1,4 @@
-package org.agenda.shared.domain.exception;
+package org.agenda.shared.exception;
 
 public class DataAccessException extends RuntimeException {
     public DataAccessException(String message) {

@@ -35,6 +35,12 @@ public class CalendarEvent {
         );
     }
 
+    public Optional<String> checkIfDateIsInThePast(LocalDateTime now){
+        return this.date.isBefore(LocalDateTime.now())
+                ? Optional.of("Note: this event date is in the past")
+                : Optional.empty();
+    }
+
 
     public int getId() {
         return id;

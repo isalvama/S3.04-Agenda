@@ -6,7 +6,10 @@ import java.util.List;
 import java.util.Optional;
 
 public interface NoteRepository {
-    void save(Note note);
-    Optional<Note> findById(int id);
-    List<Note> findAllByTaskId(int taskId);
+    Note save(Note note);
+    Optional<Note> findById(Long id);
+    List<Note> findAllByTaskId(Long taskId);
+    List<Note> findAll();
+    boolean deleteById(Long id);
+    boolean existsById(Long id);
 }

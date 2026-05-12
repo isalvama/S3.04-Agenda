@@ -4,6 +4,7 @@ import org.agenda.task.dto.TaskRequest;
 import org.agenda.task.dto.TaskResponse;
 import org.agenda.task.model.Priority;
 import org.agenda.task.model.Status;
+import org.agenda.task.model.Task;
 import org.agenda.task.repository.TaskRepository;
 import org.agenda.task.service.TaskService;
 import org.agenda.task.service.strategy.*;
@@ -11,16 +12,20 @@ import org.agenda.task.service.strategy.*;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Scanner;
 
 public class TaskController {
 
     private final TaskService taskService;
     private final Scanner scanner;
+    private final Map<String, Runnable> menuActions;
     private final TaskStrategy listAllStrategy;
     private final TaskStrategy listPendingStrategy;
     private final TaskStrategy listCompletedStrategy;
+
     private static final DateTimeFormatter DATE_FORMAT = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
 
     public TaskController(TaskService taskService, TaskRepository repository, Scanner scanner) {
@@ -29,42 +34,49 @@ public class TaskController {
         this.listAllStrategy = new ListAllStrategy(repository);
         this.listPendingStrategy = new ListPendingStrategy(repository);
         this.listCompletedStrategy = new ListCompletedStrategy(repository);
+
+        this.menuActions = new HashMap<>();
+        initializeMenu();
+    }
+
+    private void initializeMenu() {
+        menuActions.put("1", this::createTask);
+        menuActions.put("2", this::listAllTasks);
+        menuActions.put("3", this::listPendingTasks);
+        menuActions.put("4", this::listCompletedTasks);
+        menuActions.put("5", this::markTaskAsDone);
+        menuActions.put("6", this::updateTask);
+        menuActions.put("7", this::deleteTask);
+        menuActions.put("8", this::findTaskById);
     }
 
     public void showMenu() {
         boolean running = true;
-
         while (running) {
-            System.out.println("\n--- TASK MANAGEMENT ---");
-            System.out.println("1. Create a task");
-            System.out.println("2. List all tasks");
-            System.out.println("3. List pending tasks");
-            System.out.println("4. List completed tasks");
-            System.out.println("5. Mark task as done");
-            System.out.println("6. Update a task");
-            System.out.println("7. Delete a task");
-            System.out.println("8. Find a task by ID");
-            System.out.println("0. Back to main menu");
-            System.out.println("Select an option:");
-
+            printMenu();
             String choice = scanner.nextLine().trim();
 
-            switch (choice) {
-                case "1" -> createTask();
-                case "2" -> listAllTasks();
-                case "3" -> listPendingTasks();
-                case "4" -> listCompletedTasks();
-                case "5" -> markTaskAsDone();
-                case "6" -> updateTask();
-                case "7" -> deleteTask();
-                case "8" -> findTaskById();
-                case "0" -> {
-                    System.out.println("Returning to main menu...");
-                    running = false;
-                }
-                default -> System.out.println("Invalid option. Please try again.");
+            if ("0".equals(choice)) {
+                System.out.println("Returning to main menu...");
+            } else {
+                menuActions.getOrDefault(choice,
+                        () -> System.out.println("Invalid option. Please try again.")).run();
             }
         }
+    }
+
+    private void printMenu() {
+        System.out.println("\n--- TASK MANAGEMENT ---");
+        System.out.println("1. Create a task");
+        System.out.println("2. List all tasks");
+        System.out.println("3. List pending tasks");
+        System.out.println("4. List completed tasks");
+        System.out.println("5. Mark task as done");
+        System.out.println("6. Update a task");
+        System.out.println("7. Delete a task");
+        System.out.println("8. Find a task by ID");
+        System.out.println("0. Back to main menu");
+        System.out.println("Select an option:");
     }
 
     private void createTask() {
@@ -75,8 +87,7 @@ public class TaskController {
         String body = scanner.nextLine().trim();
 
         System.out.print("Priority (HIGH / MEDIUM / LOW or leave empty): ");
-        String priorityInput = scanner.nextLine().trim();
-        Priority priority = priorityInput.isBlank() ? null : Priority.valueOf(priorityInput.toUpperCase());
+        Priority priority = parsePriority(scanner.nextLine().trim(), null);
 
         System.out.print("Expiration Date (dd/MM/yyyy HH:mm or leave empty for +7 days): ");
         String dateInput = scanner.nextLine().trim();
@@ -98,32 +109,17 @@ public class TaskController {
 
     private void listAllTasks() {
         System.out.println("\n--- All Tasks ---");
-        List<TaskResponse> tasks = taskService.listTasks(listAllStrategy);
-        if (tasks.isEmpty()) {
-            System.out.println("No tasks found.");
-            return;
-        }
-        tasks.forEach(this::printTask);
+        displayTasks(taskService.listTasks(listAllStrategy), "No tasks found.");
     }
 
     private void listPendingTasks() {
         System.out.println("\n--- Pending Tasks ---");
-        List<TaskResponse> tasks = taskService.listTasks(listPendingStrategy);
-        if (tasks.isEmpty()) {
-            System.out.println("No pending tasks.");
-            return;
-        }
-        tasks.forEach(this::printTask);
+        displayTasks(taskService.listTasks(listPendingStrategy), "No pending tasks.");
     }
 
     private void listCompletedTasks() {
         System.out.println("\n--- Completed Tasks ---");
-        List<TaskResponse> tasks = taskService.listTasks(listCompletedStrategy);
-        if (tasks.isEmpty()) {
-            System.out.println("No completed tasks.");
-            return;
-        }
-        tasks.forEach(this::printTask);
+        displayTasks(taskService.listTasks(listCompletedStrategy), "No completed tasks");
     }
 
     private void markTaskAsDone() {
@@ -146,31 +142,34 @@ public class TaskController {
 
         try {
             TaskResponse current = taskService.getById(id);
-            System.out.println("Current task: " + current.title());
+            System.out.println("Updating task: " + current.title());
 
-            System.out.print("New title (leave empty to keep current): ");
+            System.out.print("New title (empty to keep): ");
             String title = scanner.nextLine().trim();
             if (title.isBlank()) title = current.title();
 
-            System.out.print("New body (leave empty to keep current): ");
+            System.out.print("New body (empty to keep): ");
             String body = scanner.nextLine().trim();
             if (body.isBlank()) body = current.body();
 
-            System.out.print("New status (PENDING / IN PROGRESS / DONE or leave empty): ");
+            System.out.print("New status (PENDING / IN PROGRESS / DONE or empty to keep): ");
             String statusInput = scanner.nextLine().trim();
-            Status status = statusInput.isBlank() ? current.status() : Status.fromSqlValue(statusInput);
+            Status status = statusInput.isBlank()
+                    ? current.status() : Status.fromSqlValue(statusInput);
 
-            System.out.print("New priority (HIGH / MEDIUM / LOW or leave empty): ");
-            String priorityInput = scanner.nextLine().trim();
-            Priority priority = priorityInput.isBlank() ? current.priority() : Priority.valueOf(priorityInput.toUpperCase());
+            System.out.print("New priority (HIGH / MEDIUM / LOW or empty to keep): ");
+            Priority priority = parsePriority(scanner.nextLine().trim(),
+                    current.priority());
 
-            System.out.print("New expiration date (dd/MM/yyyy HH:mm or leave empty): ");
+            System.out.print("New expiration date (dd/MM/yyyy HH:mm or empty to keep): ");
             String dateInput = scanner.nextLine().trim();
-            LocalDateTime expirationDate = dateInput.isBlank() ? current.expirationDate() : parseDate(dateInput);
+            LocalDateTime expirationDate = dateInput.isBlank()
+                    ? current.expirationDate() : parseDate(dateInput);
 
-            TaskRequest request = new TaskRequest(title, body, status, priority, expirationDate, current.eventId());
-            TaskResponse response = taskService.update(id, request);
-            System.out.println("Task #" + response.id() + " updated successfully.");
+            TaskRequest request = new TaskRequest(
+                    title, body, status, priority, expirationDate, current.eventId());
+            taskService.update(id, request);
+            System.out.println("Task #" + id + " updated successfully.");
 
         } catch (RuntimeException e) {
             System.out.println("Error: " + e.getMessage());
@@ -196,10 +195,17 @@ public class TaskController {
         if (id == null) return;
 
         try {
-            TaskResponse response = taskService.getById(id);
-            printTask(response);
+            printTask(taskService.getById(id));
         } catch (RuntimeException e) {
             System.out.println("Error: " + e.getMessage());
+        }
+    }
+
+    private void displayTasks(List<TaskResponse> tasks, String emptyMessage) {
+        if (tasks.isEmpty()) {
+            System.out.println(emptyMessage);
+        } else {
+            tasks.forEach(this::printTask);
         }
     }
 
@@ -211,6 +217,16 @@ public class TaskController {
                 task.priority() != null ? task.priority() : "N/A",
                 task.expirationDate() != null ? task.expirationDate().format(DATE_FORMAT) : "N/A"
         );
+    }
+
+    private Priority parsePriority(String input, Priority defaultValue) {
+        if (input.isBlank()) return defaultValue;
+        try {
+            return Priority.valueOf(input.toUpperCase());
+        } catch (IllegalArgumentException e) {
+            System.out.println("Invalid priority. Using:  " + (defaultValue != null ? defaultValue : "NONE"));
+            return defaultValue;
+        }
     }
 
     private Long readLongInput() {

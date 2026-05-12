@@ -11,9 +11,9 @@ import org.agenda.event.repository.EventRepository;
 import org.agenda.shared.domain.value_object.Description;
 import org.agenda.shared.domain.value_object.Title;
 
-import javax.swing.text.html.Option;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -28,7 +28,7 @@ public class EventServiceImpl implements EventService{
 
 
     @Override
-    public EventResponse createEvent(CreateEventRequest eventRequest) {
+    public EventResponse create(CreateEventRequest eventRequest) {
 
         CalendarEvent event = CalendarEvent.create(
                 Title.of(eventRequest.title()),
@@ -47,25 +47,24 @@ public class EventServiceImpl implements EventService{
     }
 
     @Override
-    public boolean deleteEvent(int id) {
-        eventRepository.findById(id)
-                .orElseThrow(() -> new EventNotFoundException("Delete", id));
-
-       return eventRepository.deleteById(id);
+    public List<EventResponse> getAll() {
+        return toResponseModel(eventRepository.findAll());
     }
 
     @Override
-    public List<EventResponse> listAllEvents() {
-        return toResponseModel(eventRepository.findAll(), null);
+    public List<EventResponse> getUpcomingEvents(int intervalDays) {
+        return toResponseModel(eventRepository.findUpcomingEvents(intervalDays));
     }
 
     @Override
-    public List<EventResponse> listUpcomingEvents(int intervalDays) {
-        return toResponseModel(eventRepository.findUpcomingEvents(intervalDays), null);
+    public EventResponse getById(long id) {
+       return eventRepository.findById(id).map(this::toResponseModel).
+                orElseThrow(() -> new EventNotFoundException("Search", id));
     }
 
+
     @Override
-    public EventResponse updateEvent(UpdateEventRequest eventRequest) {
+    public EventResponse update(UpdateEventRequest eventRequest) {
         final CalendarEvent event = eventRepository.findById(eventRequest.id())
                 .orElseThrow(() -> new EventNotFoundException("Update", eventRequest.id()));
 
@@ -86,6 +85,14 @@ public class EventServiceImpl implements EventService{
         return toResponseModel(event, warnings);
     }
 
+    @Override
+    public boolean delete(long id) {
+        eventRepository.findById(id)
+                .orElseThrow(() -> new EventNotFoundException("Delete", id));
+
+        return eventRepository.deleteById(id);
+    }
+
     private EventResponse toResponseModel(CalendarEvent event, List<String> warnings){
         return new EventResponse(
                 event.getId(),
@@ -95,10 +102,27 @@ public class EventServiceImpl implements EventService{
         );
     }
 
+    private EventResponse toResponseModel(CalendarEvent event){
+        return new EventResponse(
+                event.getId(),
+                event.getTitle().value(),
+                event.getDate(),
+                Collections.emptyList()
+        );
+    }
+
     private List<EventResponse> toResponseModel(List<CalendarEvent> events, List<String> warnings){
         List<EventResponse> response = new ArrayList<>();
         for (CalendarEvent event : events){
             response.add(toResponseModel(event, warnings));
+        }
+        return response;
+    }
+
+    private List<EventResponse> toResponseModel(List<CalendarEvent> events){
+        List<EventResponse> response = new ArrayList<>();
+        for (CalendarEvent event : events){
+            response.add(toResponseModel(event));
         }
         return response;
     }

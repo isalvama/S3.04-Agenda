@@ -27,9 +27,9 @@ class TitleTest {
     @Test
     void shouldThrowExceptionWhenNullOrBlank() {
         assertAll(
-                () -> assertThrows(IllegalArgumentException.class, () -> Title.of(null)),
-                () -> assertThrows(IllegalArgumentException.class, () -> Title.of("")),
-                () -> assertThrows(IllegalArgumentException.class, () -> Title.of("   "))
+                () -> assertThrows(InvalidTitleException.class, () -> Title.of(null)),
+                () -> assertThrows(InvalidTitleException.class, () -> Title.of("")),
+                () -> assertThrows(InvalidTitleException.class, () -> Title.of("   "))
         );
     }
 

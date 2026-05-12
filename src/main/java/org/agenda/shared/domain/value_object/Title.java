@@ -10,13 +10,14 @@ public record Title (String value) {
     private static final int MAX_LENGTH = 100;
 
     public Title {
-        if (value == null || value.isBlank()) throw new IllegalArgumentException("Title can not be null or blank");
+        if (value == null || value.isBlank()) throw new InvalidTitleException("Title can not be null or blank");
 
-        value = format(value);
+        value = value.trim();
 
         if (value.length() < MIN_LENGTH || value.length() > MAX_LENGTH) {
             throw new InvalidTitleException(String.format("Title should have been %d and %d characters", MIN_LENGTH, MAX_LENGTH));
         }
+        value = format(value);
     }
 
     @Override

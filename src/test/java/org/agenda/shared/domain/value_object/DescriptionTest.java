@@ -25,9 +25,9 @@ class DescriptionTest {
     @Test
     void shouldThrowExceptionWhenNullOrBlank() {
         assertAll(
-                () -> assertThrows(IllegalArgumentException.class, () -> Description.of(null)),
-                () -> assertThrows(IllegalArgumentException.class, () -> Description.of("")),
-                () -> assertThrows(IllegalArgumentException.class, () -> Description.of("   "))
+                () -> assertThrows(InvalidDescriptionException.class, () -> Description.of(null)),
+                () -> assertThrows(InvalidDescriptionException.class, () -> Description.of("")),
+                () -> assertThrows(InvalidDescriptionException.class, () -> Description.of("   "))
         );
     }
 

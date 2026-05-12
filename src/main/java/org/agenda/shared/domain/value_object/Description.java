@@ -8,7 +8,7 @@ public record Description(String value) {
     private static final int MAX_LENGTH = 600;
 
     public Description {
-        if (value == null || value.isBlank()) throw new IllegalArgumentException("Description can not be null or blank");
+        if (value == null || value.isBlank()) throw new InvalidDescriptionException("Description can not be null or blank");
         value = value.trim();
         if (value.length() < MIN_LENGTH || value.length() > MAX_LENGTH) {
             throw new InvalidDescriptionException(String.format("Description exceeds the limit of %d characters", MAX_LENGTH)

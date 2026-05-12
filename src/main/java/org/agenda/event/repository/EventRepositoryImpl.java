@@ -14,7 +14,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-public class MySQLEventRepository implements EventRepository {
+public class EventRepositoryImpl implements EventRepository {
     @Override
     public CalendarEvent save(CalendarEvent event) {
         String sql = "INSERT INTO EVENT(TITLE, BODY, DATE, TYPE, SCHEDULE, CREATED_AT) VALUES (?, ?, ?, ?, ?, ?)";

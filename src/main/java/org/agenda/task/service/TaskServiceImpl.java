@@ -2,6 +2,7 @@ package org.agenda.task.service;
 
 import org.agenda.task.dto.TaskRequest;
 import org.agenda.task.dto.TaskResponse;
+import org.agenda.task.exception.TaskNotFoundException;
 import org.agenda.task.model.Status;
 import org.agenda.task.model.Task;
 import org.agenda.task.repository.TaskRepository;
@@ -39,7 +40,7 @@ public class TaskServiceImpl implements TaskService {
     public TaskResponse getById(Long id) {
         return repository.findById(validateId(id))
                 .map(TaskResponse::fromEntity)
-                .orElseThrow(() -> new RuntimeException(String.format("Task with ID %d not found", id)));
+                .orElseThrow(() -> new TaskNotFoundException(id));
     }
 
     @Override
@@ -69,7 +70,7 @@ public class TaskServiceImpl implements TaskService {
         validateRequest(request);
 
         Task task = repository.findById(id)
-                .orElseThrow(() -> new RuntimeException(String.format("Cannot update: Task with id %d not found", id)));
+                .orElseThrow(() -> new TaskNotFoundException(id));
 
         task.setTitle(request.title());
         task.setBody(request.body());
@@ -85,7 +86,7 @@ public class TaskServiceImpl implements TaskService {
     @Override
     public TaskResponse markAsDone(Long id) {
         Task task = repository.findById(validateId(id))
-                .orElseThrow(() -> new RuntimeException(String.format("Cannot complete: Task with id %d not found", id)));
+                .orElseThrow(() -> new TaskNotFoundException(id));
 
         task.setStatus(Status.DONE);
         task.setUpdatedAt(LocalDateTime.now());
@@ -97,7 +98,7 @@ public class TaskServiceImpl implements TaskService {
     public boolean delete(Long id) {
         validateId(id);
         if (!repository.existsById(id)) {
-            throw new RuntimeException(String.format("Cannot delete: Task with id %d not found", id));
+            throw new TaskNotFoundException(id);
         }
         return repository.deleteById(id);
     }

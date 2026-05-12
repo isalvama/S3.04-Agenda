@@ -2,6 +2,7 @@ package org.agenda.task.service;
 
 import org.agenda.task.dto.TaskRequest;
 import org.agenda.task.dto.TaskResponse;
+import org.agenda.task.exception.TaskNotFoundException;
 import org.agenda.task.model.Priority;
 import org.agenda.task.model.Status;
 import org.agenda.task.model.Task;
@@ -218,11 +219,11 @@ public class TaskServiceTest {
             }
 
             @Test
-            @DisplayName("getById: non-existent id throws RuntimeException")
+            @DisplayName("getById: non-existent id throws TaskNotFoundException")
             void getByIdNotFoundThrows() {
                 when(repository.findById(99L)).thenReturn(Optional.empty());
 
-                RuntimeException ex = assertThrows(RuntimeException.class, () -> service.getById(99L));
+                TaskNotFoundException ex = assertThrows(TaskNotFoundException.class, () -> service.getById(99L));
                 assertTrue(ex.getMessage().contains("99"));
                 verify(repository, times(1)).findById(99L);
             }
@@ -235,11 +236,11 @@ public class TaskServiceTest {
             }
 
             @Test
-            @DisplayName("markAsDone: non-existent id throws RuntimeException")
+            @DisplayName("markAsDone: non-existent id throws TaskNotFoundException")
             void markAsDoneNotFoundThrows() {
                 when(repository.findById(99L)).thenReturn(Optional.empty());
 
-                assertThrows(RuntimeException.class, () -> service.markAsDone(99L));
+                assertThrows(TaskNotFoundException.class, () -> service.markAsDone(99L));
                 verify(repository, times(1)).findById(99L);
                 verify(repository, never()).save(any());
             }
@@ -249,18 +250,18 @@ public class TaskServiceTest {
             void deleteNotFoundThrows() {
                 when(repository.existsById(99L)).thenReturn(false);
 
-                assertThrows(RuntimeException.class, () -> service.delete(99L));
+                assertThrows(TaskNotFoundException.class, () -> service.delete(99L));
                 verify(repository, times(1)).existsById(99L);
                 verify(repository, never()).deleteById(any());
             }
 
             @Test
-            @DisplayName("update: non-existent id throws RuntimeException")
+            @DisplayName("update: non-existent id throws TaskNotFoundException")
             void updateNotFoundThrows() {
                 when(repository.findById(99L)).thenReturn(Optional.empty());
 
                 TaskRequest request = createValidRequest();
-                assertThrows(RuntimeException.class, () -> service.update(99L, request));
+                assertThrows(TaskNotFoundException.class, () -> service.update(99L, request));
                 verify(repository, times(1)).findById(99L);
                 verify(repository, never()).save(any());
             }

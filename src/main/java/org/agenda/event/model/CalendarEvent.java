@@ -8,14 +8,14 @@ import java.util.Objects;
 import java.util.Optional;
 
 public class CalendarEvent {
-    private int id;
+    private long id;
     private Title title;
     private Description description;
     private LocalDateTime date;
     private EventType type;
     private EventSchedule schedule;
 
-    public CalendarEvent(int id, Title title, Description description, LocalDateTime date, EventType type, EventSchedule schedule) {
+    public CalendarEvent(long id, Title title, Description description, LocalDateTime date, EventType type, EventSchedule schedule) {
         this.id = id;
         this.title = Objects.requireNonNull(title, "event title can not be null");
         this.description = description;
@@ -26,7 +26,7 @@ public class CalendarEvent {
 
     public static CalendarEvent create(Title title, Description description, LocalDateTime date, EventType type, EventSchedule schedule) {
         return new CalendarEvent(
-                0,
+                0L,
                 title,
                 description,
                 date,
@@ -42,11 +42,11 @@ public class CalendarEvent {
     }
 
 
-    public int getId() {
+    public long getId() {
         return id;
     }
 
-    public void setId(int id) {
+    public void setId(long id) {
         this.id = id;
     }
 

@@ -63,30 +63,7 @@ public class EventController {
     }
 
     private void createEvent() {
-        String title = ConsoleReader.validateString("Title: ");
-
-        System.out.print("Body: ");
-        String bodyInput = scanner.nextLine().trim();
-        String body = bodyInput.isBlank() ? null : bodyInput;
-
-        System.out.print("Type of Event (BIRTHDATE / APPOINTMENT / REMINDER / or leave empty for OTHER): ");
-        String typeOfEventInput = scanner.nextLine().trim();
-        String eventType = typeOfEventInput.isBlank() ? null : validateName(typeOfEventInput, EventType.class);
-
-        String date = ConsoleReader.validateString("Event Date (dd/MM/yyyy HH:mm or leave empty to set it for tomorrow (+1 day)): ");
-        String dateInput = scanner.nextLine().trim();
-        LocalDateTime eventDate = dateInput.isBlank()
-                ? LocalDateTime.now().plusDays(1)
-                : parseDate(dateInput);
-
-        System.out.print("Schedule a repetition for the event (YEARLY / MONTHLY / WEEKLY / DAILY / HOURLY or leave empty for none): ");
-        String repetition = scanner.nextLine().trim();
-        repetition = repetition.isBlank()
-                ? null
-                : validateName(repetition, EventSchedule.class);
-
-        CreateEventRequest request = new CreateEventRequest(title, body, eventDate, eventType, repetition);
-
+        CreateEventRequest request = collectData("");
         try {
             EventResponse response = eventService.create(request);
             System.out.printf("Event \"%s\" created with ID %s for date %s. %s%n", response.title(), response.id(), response.date(), response.warnings());
@@ -118,7 +95,7 @@ public class EventController {
     private void updateEvent() {
         Long id = ConsoleReader.readLong("Enter the event ID to update: ");
         CreateEventRequest data = collectData("New ");
-        UpdateEventRequest request = new UpdateEventRequest(id, data.title(), data.description(), data.date(), data.type(), data.eventSchedule()); // TODO PONERLO EN OTRO OBJ
+        UpdateEventRequest request = new UpdateEventRequest(id, data.title(), data.description(), data.date(), data.type(), data.eventSchedule());
 
         try {
             EventResponse response = eventService.update(request);

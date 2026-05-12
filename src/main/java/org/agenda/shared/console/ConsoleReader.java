@@ -7,20 +7,6 @@ public class ConsoleReader {
 
     private static final Scanner SC = new Scanner(System.in);
 
-    public static byte readByte(String message){
-        while (true) {
-            System.out.println(message);
-            try {
-                byte b = SC.nextByte();
-                SC.nextLine();
-                return b;
-            } catch (InputMismatchException e) {
-                System.out.println("It is an invalid type");
-                SC.nextLine();
-            }
-        }
-    }
-
     public static long readLong(String message){
         while (true){
             System.out.println(message);

@@ -26,7 +26,7 @@ public class EventRepositoryImpl implements EventRepository {
 
             try (ResultSet generatedKeys = ps.getGeneratedKeys()) {
                 if (generatedKeys.next()) {
-                    int nextId = generatedKeys.getInt(1);
+                    long nextId = generatedKeys.getLong(1);
                     event.setId(nextId);
                 }
                 return event;
@@ -50,7 +50,7 @@ public class EventRepositoryImpl implements EventRepository {
     }
 
     @Override
-    public boolean deleteById(int id) {
+    public boolean deleteById(long id) {
         String sql = "DELETE FROM EVENT WHERE id = ?;";
 
         try (Connection connection = DatabaseConnection.getInstance().getConnection();
@@ -63,7 +63,7 @@ public class EventRepositoryImpl implements EventRepository {
     }
 
     @Override
-    public Optional<CalendarEvent> findById(int id) {
+    public Optional<CalendarEvent> findById(long id) {
         String sql = "SELECT * FROM EVENT WHERE ID = ?";
 
         try (Connection connection = DatabaseConnection.getInstance().getConnection();
@@ -126,13 +126,13 @@ public class EventRepositoryImpl implements EventRepository {
         ps.setString(5, (event.getSchedule() != null) ? event.getSchedule().name() : null);
         ps.setTimestamp(6, Timestamp.valueOf(LocalDateTime.now()));
         if (event.getId() > 0) {
-            ps.setInt(7, event.getId());
+            ps.setLong(7, event.getId());
         }
     }
 
     private CalendarEvent mapStatementToEvent(ResultSet rs) throws SQLException {
 
-        int id = rs.getInt("id");
+        Long id = rs.getLong("id");
         String title = rs.getString("title");
         String bodyRaw = rs.getString("body");
         LocalDateTime date = rs.getObject("date", LocalDateTime.class);

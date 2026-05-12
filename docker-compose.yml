@@ -17,7 +17,7 @@ services:
     networks:
       - agenda-network
     healthcheck:
-      test: [ "CMD-SHELL", "mysqladmin ping -h localhost -u root --password=$$MYSQL_ROOT_PASSWORD" ]
+      test: [ "CMD-SHELL", "mysqladmin ping -h localhost -u $$MYSQL_USER --password=$$MYSQL_PASSWORD" ]
       interval: 15s
       timeout: 10s
       retries: 20
@@ -36,12 +36,12 @@ services:
         condition: service_healthy
   java-app:
     build:
-      context: .                            # Directorio raíz donde está el Dockerfile
+      context: .                            # Root directory where the Dockerfile is located
       dockerfile: Dockerfile
     container_name: java-app
     restart: "no"
     stdin_open: true
-    tty: true                               # Asigna una pseudo-terminal para la CLI
+    tty: true                               # Assign a pseudo-terminal for the CLI
     environment:
       DB_HOST: ${DB_HOST}
       DB_PORT: ${DB_PORT}

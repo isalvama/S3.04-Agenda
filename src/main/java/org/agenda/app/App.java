@@ -24,7 +24,6 @@ public class App {
             // NOTE DOMAIN
 
             // EVENT DOMAIN
-            git checkout feature/task-domain
 
             showMainMenu(scanner, taskController);
 

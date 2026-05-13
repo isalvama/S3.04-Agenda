@@ -1,12 +1,16 @@
 package org.agenda.event.repository;
 
-import org.agenda.event.model.Event;
+import org.agenda.event.model.CalendarEvent;
 
 import java.util.List;
 import java.util.Optional;
 
 public interface EventRepository {
-    void save(Event event);
-    Optional<Event> findById(int id);
-    List<Event> findAll();
+    Optional<CalendarEvent> save(CalendarEvent event);
+    Optional<CalendarEvent> findById(long id);
+    List<CalendarEvent> findAll();
+    List<CalendarEvent> findUpcomingEvents(int intervalDays);
+
+    boolean updateById(CalendarEvent event);
+    boolean deleteById(long id);
 }

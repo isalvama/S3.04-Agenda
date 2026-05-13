@@ -6,7 +6,7 @@ DROP TABLE IF EXISTS note;
 DROP TABLE IF EXISTS task;
 DROP TABLE IF EXISTS event;
 
-CREATE TABLE event (
+CREATE TABLE EVENT (
     id           INT UNSIGNED    AUTO_INCREMENT PRIMARY KEY,
     title        VARCHAR(100)    NOT NULL,
     body         TEXT,
@@ -21,7 +21,7 @@ CREATE TABLE event (
     INDEX idx_event_type (type)
 ) ENGINE = InnoDB;
 
-CREATE TABLE task (
+CREATE TABLE TASK (
     id              INT UNSIGNED    AUTO_INCREMENT PRIMARY KEY,
     title           VARCHAR(100)    NOT NULL,
     body            TEXT,
@@ -40,7 +40,7 @@ CREATE TABLE task (
     INDEX idx_task_priority 	(priority)
 ) ENGINE = InnoDB;
 
-CREATE TABLE note (
+CREATE TABLE NOTE (
     id         INT UNSIGNED    AUTO_INCREMENT PRIMARY KEY,
     title      VARCHAR(100)    NOT NULL,
     body       TEXT,

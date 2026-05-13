@@ -1,3 +1,7 @@
 package org.agenda.note.dto;
 
-public record NoteRequest(int taskId, String content) {}
+public record NoteRequest(
+        String title,
+        String body,
+        Long taskId
+) { }

@@ -1,5 +1,11 @@
 package org.agenda.shared.console;
 
+import org.agenda.shared.domain.exception.DomainException;
+
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
+import java.util.Arrays;
 import java.util.InputMismatchException;
 import java.util.Scanner;
 
@@ -15,7 +21,7 @@ public class ConsoleReader {
                 SC.nextLine();
                 return input;
             } catch (InputMismatchException e){
-                System.out.println("It is an invalid type");
+                System.out.println("Invalid type: Please enter a valid number");
                 SC.nextLine();
             }
         }
@@ -29,7 +35,7 @@ public class ConsoleReader {
                 SC.nextLine();
                 return input;
             } catch (InputMismatchException e){
-                System.out.println("It is an invalid type");
+                System.out.println("Invalid Input: the Input is of an invalid type");
                 SC.nextLine();
             }
         }
@@ -50,11 +56,42 @@ public class ConsoleReader {
         System.out.println(message);
         String input = SC.nextLine();
         if (input.isBlank()) {
-            throw new InvalidInputTypeException("The input can't be a blank space");
+            throw new InvalidInputTypeException("Invalid Input: The input can't be a blank space");
         } else if (input.trim().length() < 2) {
-            throw new InvalidInputTypeException("The input can't consist of 0 or 1 only letter");
+            throw new InvalidInputTypeException("Invalid Input: The input can't consist of 0 or 1 only letter");
         }
         return input;
+    }
+
+
+
+    public static LocalDateTime readDate(String message, DateTimeFormatter DATE_FORMAT) {
+        while (true) {
+            System.out.print(message);
+            String rawInput = SC.nextLine().trim();
+            try {
+                return rawInput.isBlank() ? LocalDateTime.now().plusDays(1) : LocalDateTime.parse(rawInput, DATE_FORMAT);
+            } catch (DateTimeParseException e) {
+                System.out.println("Invalid date format: use the date format dd/MM/yyyy HH:mm");
+            }
+        }
+    }
+
+    public static <T extends Enum<T>> String readEnumName(Class<T> enumClass, String message) {
+        while (true){
+            System.out.print(message);
+            String rawInput = SC.nextLine().trim();
+            try {
+                return rawInput.isBlank() ? null : validateEnumName(rawInput, enumClass);
+            } catch (DomainException ex) {
+                System.err.println(ex.getMessage());
+            }
+        }
+    }
+
+    private static <T extends Enum<T>>String validateEnumName(String name, Class<T> enumClass){
+        if (Arrays.stream(enumClass.getEnumConstants()).noneMatch(v -> v.toString().equalsIgnoreCase(name))) throw new DomainException(String.format("Invalid %s name: \"%s\" does not match with %s's name of constants (%s)", enumClass.getName(), name, enumClass.getName(), Arrays.toString(enumClass.getEnumConstants())));
+        return name;
     }
 }
 

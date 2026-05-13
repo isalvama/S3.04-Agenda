@@ -6,7 +6,7 @@ import java.util.List;
 import java.util.Optional;
 
 public interface EventRepository {
-    CalendarEvent save(CalendarEvent event);
+    Optional<CalendarEvent> save(CalendarEvent event);
     Optional<CalendarEvent> findById(long id);
     List<CalendarEvent> findAll();
     List<CalendarEvent> findUpcomingEvents(int intervalDays);

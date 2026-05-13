@@ -16,20 +16,21 @@ import java.util.Optional;
 
 public class EventRepositoryImpl implements EventRepository {
     @Override
-    public CalendarEvent save(CalendarEvent event) {
+    public Optional<CalendarEvent> save(CalendarEvent event) {
         String sql = "INSERT INTO EVENT(TITLE, BODY, DATE, TYPE, SCHEDULE, CREATED_AT) VALUES (?, ?, ?, ?, ?, ?)";
 
         try (Connection connection = DatabaseConnection.getInstance().getConnection();
              PreparedStatement ps = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
            mapEventToStatement(ps, event);
-            ps.executeUpdate();
+           ps.executeUpdate();
 
             try (ResultSet generatedKeys = ps.getGeneratedKeys()) {
                 if (generatedKeys.next()) {
                     long nextId = generatedKeys.getLong(1);
                     event.setId(nextId);
+                    return Optional.of(event);
                 }
-                return event;
+                return Optional.empty();
             }
         } catch (SQLException ex) {
             throw new DataAccessException("Error saving the event in MySQL: " + ex.getMessage());
@@ -73,11 +74,11 @@ public class EventRepositoryImpl implements EventRepository {
                 if (rs.next()) {
                     return Optional.of(mapStatementToEvent(rs));
                 }
+                return Optional.empty();
             }
         } catch (SQLException ex) {
             throw new DataAccessException("Error finding the Event with id " + id + " in MySQL: " + ex.getMessage());
         }
-        return Optional.empty();
     }
 
 

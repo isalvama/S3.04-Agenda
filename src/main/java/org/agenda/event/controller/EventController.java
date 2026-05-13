@@ -8,12 +8,13 @@ import org.agenda.event.model.EventType;
 import org.agenda.event.repository.EventRepository;
 import org.agenda.event.service.EventService;
 import org.agenda.shared.console.ConsoleReader;
+
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.time.format.DateTimeParseException;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Scanner;
+
+import static org.agenda.shared.console.ConsoleReader.readLong;
 
 
 public class EventController {
@@ -93,7 +94,7 @@ public class EventController {
     }
 
     private void updateEvent() {
-        Long id = ConsoleReader.readLong("Enter the event ID to update: ");
+        long id = readLong("Enter the event ID to update: ");
         CreateEventRequest data = collectData("New ");
         UpdateEventRequest request = new UpdateEventRequest(id, data.title(), data.description(), data.date(), data.type(), data.eventSchedule());
 
@@ -107,10 +108,7 @@ public class EventController {
     }
 
     private void deleteEvent() {
-        System.out.print("Enter Event ID to delete: ");
-        Long id = readLongInput();
-        if (id == null) return;
-
+        long id = ConsoleReader.readLong("Enter an Event ID to delete: ");
         try {
             eventService.delete(id);
             System.out.println("Event #" + id + " deleted.");
@@ -120,10 +118,7 @@ public class EventController {
     }
 
     private void findEventById() {
-        System.out.print("Enter Event ID: ");
-        Long id = readLongInput();
-        if (id == null) return;
-
+        long id = ConsoleReader.readLong("Enter the Event ID to find: ");
         try {
             EventResponse response = eventService.getById(id);
             printEvent(response);
@@ -139,23 +134,13 @@ public class EventController {
         String bodyInput = scanner.nextLine().trim();
         String body = bodyInput.isBlank() ? null : bodyInput;
 
-        System.out.printf("%sType of Event (BIRTHDATE / APPOINTMENT / REMINDER / or leave empty for OTHER): ", wordToAddToQueries != null ? wordToAddToQueries : "");
-        String typeOfEventInput = scanner.nextLine().trim();
-        String eventType = typeOfEventInput.isBlank() ? null : validateName(typeOfEventInput, EventType.class);
+       String eventType = ConsoleReader.readEnumName(EventType.class, String.format("%sType of Event (BIRTHDATE / APPOINTMENT / REMINDER / or leave empty for OTHER): ", wordToAddToQueries != null ? wordToAddToQueries : ""));
 
-        String date = ConsoleReader.validateString(String.format("%sEvent Date (dd/MM/yyyy HH:mm or leave empty to set it for tomorrow (+1 day)): ", wordToAddToQueries != null ? wordToAddToQueries : ""));
-        String dateInput = scanner.nextLine().trim();
-        LocalDateTime eventDate = dateInput.isBlank()
-                ? LocalDateTime.now().plusDays(1)
-                : parseDate(dateInput);
+        LocalDateTime date = ConsoleReader.readDate(String.format("%sEvent Date (dd/MM/yyyy HH:mm or leave empty to set it for tomorrow (+1 day)): %n", wordToAddToQueries != null ? wordToAddToQueries : ""), DATE_FORMAT);
 
-        System.out.printf("%sSchedule a repetition for the event (YEARLY / MONTHLY / WEEKLY / DAILY / HOURLY or leave empty for none):", wordToAddToQueries != null ? wordToAddToQueries : "");
-        String repetition = scanner.nextLine().trim();
-        repetition = repetition.isBlank()
-                ? null
-                : validateName(repetition, EventSchedule.class);
+        String repetition = ConsoleReader.readEnumName(EventSchedule.class, String.format("%sSchedule a repetition for the event (YEARLY / MONTHLY / WEEKLY / DAILY / HOURLY or leave empty for none):", wordToAddToQueries != null ? wordToAddToQueries : ""));
 
-        return new CreateEventRequest(title, body, eventDate, eventType, repetition);
+        return new CreateEventRequest(title, body, date, eventType, repetition);
     }
 
     private void printEvent(EventResponse eventResponse) {
@@ -164,29 +149,5 @@ public class EventController {
                 eventResponse.title(),
                 eventResponse.date()
         );
-    }
-
-    private Long readLongInput() {
-        try {
-            return Long.parseLong(scanner.nextLine().trim());
-        } catch (NumberFormatException e) {
-            System.out.println("Invalid ID. Please enter a number.");
-            return null;
-        }
-    }
-
-    private LocalDateTime parseDate(String input) {
-        while (true) {
-            try {
-                return LocalDateTime.parse(input, DATE_FORMAT);
-            } catch (DateTimeParseException e) {
-                System.out.println("Invalid date format. Use: dd/MM/yyyy HH:mm");
-            }
-        }
-    }
-
-    private <T extends Enum<T>>String validateName (String name, Class<T> enumClass){
-        if (Arrays.stream(enumClass.getEnumConstants()).noneMatch(v -> v.toString().equalsIgnoreCase(name))) throw new IllegalArgumentException(); //TODO
-        return name;
     }
 }

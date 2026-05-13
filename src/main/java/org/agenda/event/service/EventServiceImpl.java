@@ -7,6 +7,7 @@ import org.agenda.event.model.CalendarEvent;
 import org.agenda.event.model.EventSchedule;
 import org.agenda.event.model.EventType;
 import org.agenda.event.repository.EventNotFoundException;
+import org.agenda.event.repository.EventNotSavedException;
 import org.agenda.event.repository.EventRepository;
 import org.agenda.shared.domain.value_object.Description;
 import org.agenda.shared.domain.value_object.Title;
@@ -38,7 +39,8 @@ public class EventServiceImpl implements EventService{
                 eventRequest.eventSchedule() != null ? EventSchedule.valueOf(eventRequest.eventSchedule()) : null
         );
 
-        event = eventRepository.save(event);
+        EventResponse response = eventRepository.save(event).map(this::toResponseModel).
+                orElseThrow(() -> new EventNotSavedException(String.format("Failed Save: Event \n%s\n could not be saved", event.getTitle())));
 
         List<String> warnings = new ArrayList<>();
         event.checkIfDateIsInThePast(LocalDateTime.now()).ifPresent(warnings::add);

@@ -35,8 +35,8 @@ public class EventServiceImpl implements EventService{
                 Title.of(eventRequest.title()),
                 eventRequest.description() != null ? Description.of(eventRequest.description()) : null,
                 eventRequest.date(),
-                eventRequest.type() != null ? EventType.valueOf(eventRequest.type()) : EventType.OTHER ,
-                eventRequest.eventSchedule() != null ? EventSchedule.valueOf(eventRequest.eventSchedule()) : null
+                eventRequest.type() != null ? EventType.valueOf(eventRequest.type().toUpperCase()) : EventType.OTHER, // TODO REViEW: AQUI YA SE PASA "OTHER" si el usario lo ha dejado en blanco en el controller
+                eventRequest.eventSchedule() != null ? EventSchedule.valueOf(eventRequest.eventSchedule().toUpperCase()) : null
         );
 
         EventResponse response = eventRepository.save(event).map(this::toResponseModel).

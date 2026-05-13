@@ -5,9 +5,12 @@ import org.agenda.event.dto.EventResponse;
 import org.agenda.event.dto.UpdateEventRequest;
 import org.agenda.event.model.EventSchedule;
 import org.agenda.event.model.EventType;
+import org.agenda.event.repository.EventNotSavedException;
 import org.agenda.event.repository.EventRepository;
 import org.agenda.event.service.EventService;
 import org.agenda.shared.console.ConsoleReader;
+import org.agenda.shared.domain.exception.DomainException;
+import org.agenda.shared.exception.DataAccessException;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -68,8 +71,14 @@ public class EventController {
         try {
             EventResponse response = eventService.create(request);
             System.out.printf("Event \"%s\" created with ID %s for date %s. %s%n", response.title(), response.id(), response.date(), response.warnings());
-        } catch (IllegalArgumentException e) {
-            System.out.println("Error: " + e.getMessage());
+        } catch (DomainException e) {
+            System.out.println("Domain Error: " + e.getMessage());
+        } catch (EventNotSavedException e) {
+            System.out.println("Error In Saving Process: " + e.getMessage());
+        } catch (DataAccessException e) {
+            System.out.println("Error in DataBase: " + e.getMessage());
+        } catch (Exception e) {
+            System.out.println("Critical Error: " + e.getMessage());
         }
     }
 
@@ -134,13 +143,14 @@ public class EventController {
         String bodyInput = scanner.nextLine().trim();
         String body = bodyInput.isBlank() ? null : bodyInput;
 
-       String eventType = ConsoleReader.readEnumName(EventType.class, String.format("%sType of Event (BIRTHDATE / APPOINTMENT / REMINDER / or leave empty for OTHER): ", wordToAddToQueries != null ? wordToAddToQueries : ""));
+       String typeInput = ConsoleReader.readEnumName(EventType.class, String.format("%sType of Event (BIRTHDATE / APPOINTMENT / REMINDER / or leave empty for OTHER): ", wordToAddToQueries != null ? wordToAddToQueries : ""));
+       String type = typeInput != null ? typeInput : "OTHER";
 
         LocalDateTime date = ConsoleReader.readDate(String.format("%sEvent Date (dd/MM/yyyy HH:mm or leave empty to set it for tomorrow (+1 day)): %n", wordToAddToQueries != null ? wordToAddToQueries : ""), DATE_FORMAT);
 
         String repetition = ConsoleReader.readEnumName(EventSchedule.class, String.format("%sSchedule a repetition for the event (YEARLY / MONTHLY / WEEKLY / DAILY / HOURLY or leave empty for none):", wordToAddToQueries != null ? wordToAddToQueries : ""));
 
-        return new CreateEventRequest(title, body, date, eventType, repetition);
+        return new CreateEventRequest(title, body, date, type, repetition);
     }
 
     private void printEvent(EventResponse eventResponse) {

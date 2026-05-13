@@ -91,7 +91,7 @@ public class ConsoleReader {
 
     private static <T extends Enum<T>>String validateEnumName(String name, Class<T> enumClass){
         if (Arrays.stream(enumClass.getEnumConstants()).noneMatch(v -> v.toString().equalsIgnoreCase(name))) throw new DomainException(String.format("Invalid %s name: \"%s\" does not match with %s's name of constants (%s)", enumClass.getName(), name, enumClass.getName(), Arrays.toString(enumClass.getEnumConstants())));
-        return name;
+        return name.toUpperCase();
     }
 }
 

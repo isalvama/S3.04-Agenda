@@ -5,6 +5,7 @@ import org.agenda.event.dto.EventResponse;
 import org.agenda.event.dto.UpdateEventRequest;
 import org.agenda.event.model.EventSchedule;
 import org.agenda.event.model.EventType;
+import org.agenda.event.repository.EventNotFoundException;
 import org.agenda.event.repository.EventNotSavedException;
 import org.agenda.event.repository.EventRepository;
 import org.agenda.event.service.EventService;
@@ -70,7 +71,7 @@ public class EventController {
         CreateEventRequest request = collectData("");
         try {
             EventResponse response = eventService.create(request);
-            System.out.printf("Event \"%s\" created with ID %s for date %s. %s%n", response.title(), response.id(), response.date(), response.warnings());
+            System.out.printf("Event \"%s\" created with ID %s for date %s. %s\n", response.title(), response.id(), response.date(), response.warnings());
         } catch (DomainException e) {
             System.out.println("Domain Error: " + e.getMessage());
         } catch (EventNotSavedException e) {
@@ -84,22 +85,36 @@ public class EventController {
 
     private void listAllEvents() {
         System.out.println("\n--- All Events ---");
-        List<EventResponse> events = eventService.getAll();
-        if (events.isEmpty()) {
-            System.out.println("No events found.");
-            return;
+        try {
+            List<EventResponse> events = eventService.getAll();
+
+            if (events.isEmpty()) {
+                System.out.println("No events found");
+                return;
+            }
+            events.forEach(this::printEvent);
+
+        } catch (DomainException e) {
+            System.out.println("Domain Error: " + e.getMessage());
+        } catch (DataAccessException e) {
+            System.out.println("Error in DataBase: " + e.getMessage());
         }
-        events.forEach(this::printEvent);
     }
 
     private void listUpcomingEvents() {
         int days = ConsoleReader.readInt("\nEnter the number of days to display the next events (e.g., 7).");
-        List<EventResponse> events = eventService.getUpcomingEvents(days);
-        if (events.isEmpty()) {
-            System.out.printf("There are no events in the next %s days", days);
-            return;
+        try {
+            List<EventResponse> events = eventService.getUpcomingEvents(days);
+            if (events.isEmpty()) {
+                System.out.printf("There are no events in the next %s days", days);
+                return;
+            }
+            events.forEach(this::printEvent);
+        } catch (DomainException e) {
+            System.out.println("Domain Error: " + e.getMessage());
+        } catch (DataAccessException e) {
+            System.out.println("Error in DataBase: " + e.getMessage());
         }
-        events.forEach(this::printEvent);
     }
 
     private void updateEvent() {
@@ -110,8 +125,11 @@ public class EventController {
         try {
             EventResponse response = eventService.update(request);
             System.out.printf("Task # %s updated successfully: \nTile: %s\nDate: %s\n%s", response.id(), response.title(), response.date(), response.warnings());
-
-        } catch (RuntimeException e) {
+        } catch (DomainException e) {
+            System.out.println("Domain Error: " + e.getMessage());
+        } catch (DataAccessException e) {
+            System.out.println("Error in DataBase: " + e.getMessage());
+        } catch (EventNotFoundException e) {
             System.out.println("Error: " + e.getMessage());
         }
     }
@@ -121,7 +139,11 @@ public class EventController {
         try {
             eventService.delete(id);
             System.out.println("Event #" + id + " deleted.");
-        } catch (RuntimeException e) {
+        } catch (DomainException e) {
+            System.out.println("Domain Error: " + e.getMessage());
+        } catch (DataAccessException e) {
+            System.out.println("Error in DataBase: " + e.getMessage());
+        } catch (EventNotFoundException e) {
             System.out.println("Error: " + e.getMessage());
         }
     }
@@ -131,22 +153,26 @@ public class EventController {
         try {
             EventResponse response = eventService.getById(id);
             printEvent(response);
-        } catch (RuntimeException e) {
+        } catch (DomainException e) {
+            System.out.println("Domain Error: " + e.getMessage());
+        } catch (DataAccessException e) {
+            System.out.println("Error in DataBase: " + e.getMessage());
+        } catch (EventNotFoundException e) {
             System.out.println("Error: " + e.getMessage());
         }
     }
 
     private CreateEventRequest collectData(String wordToAddToQueries){
-        String title = ConsoleReader.validateString(String.format("%sTitle: ", wordToAddToQueries != null ? wordToAddToQueries : ""));
+        String title = ConsoleReader.readString(String.format("%sTitle: ", wordToAddToQueries != null ? wordToAddToQueries : ""), 2);
 
         System.out.printf("%sBody: ", wordToAddToQueries != null ? wordToAddToQueries : "");
         String bodyInput = scanner.nextLine().trim();
         String body = bodyInput.isBlank() ? null : bodyInput;
 
-       String typeInput = ConsoleReader.readEnumName(EventType.class, String.format("%sType of Event (BIRTHDATE / APPOINTMENT / REMINDER / or leave empty for OTHER): ", wordToAddToQueries != null ? wordToAddToQueries : ""));
-       String type = typeInput != null ? typeInput : "OTHER";
+        String typeInput = ConsoleReader.readEnumName(EventType.class, String.format("%sType of Event (BIRTHDATE / APPOINTMENT / REMINDER / or leave empty for OTHER): ", wordToAddToQueries != null ? wordToAddToQueries : ""));
+        String type = typeInput != null ? typeInput : "OTHER";
 
-        LocalDateTime date = ConsoleReader.readDate(String.format("%sEvent Date (dd/MM/yyyy HH:mm or leave empty to set it for tomorrow (+1 day)): %n", wordToAddToQueries != null ? wordToAddToQueries : ""), DATE_FORMAT);
+        LocalDateTime date = ConsoleReader.readDate(String.format("%sEvent Date (dd/MM/yyyy HH:mm or leave empty to set it for tomorrow (+1 day)): %n", wordToAddToQueries != null ? wordToAddToQueries : ""), DATE_FORMAT, LocalDateTime.now().plusDays(1));
 
         String repetition = ConsoleReader.readEnumName(EventSchedule.class, String.format("%sSchedule a repetition for the event (YEARLY / MONTHLY / WEEKLY / DAILY / HOURLY or leave empty for none):", wordToAddToQueries != null ? wordToAddToQueries : ""));
 

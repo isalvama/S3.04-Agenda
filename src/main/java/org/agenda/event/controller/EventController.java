@@ -70,8 +70,8 @@ public class EventController {
     private void createEvent() {
         CreateEventRequest request = collectData("");
         try {
-            EventResponse response = eventService.create(request);
-            System.out.printf("Event \"%s\" created with ID %s for date %s. %s\n", response.title(), response.id(), response.date(), response.warnings());
+            EventResponse eventResponse = eventService.create(request);
+            System.out.println("Event created with ID " + eventResponse.id() + ":\n" + formatEventResponse(eventResponse));
         } catch (DomainException e) {
             System.out.println("Domain Error: " + e.getMessage());
         } catch (EventNotSavedException e) {
@@ -86,13 +86,14 @@ public class EventController {
     private void listAllEvents() {
         System.out.println("\n--- All Events ---");
         try {
-            List<EventResponse> events = eventService.getAll();
+            List<EventResponse> eventResponses = eventService.getAll();
 
-            if (events.isEmpty()) {
+            if (eventResponses.isEmpty()) {
                 System.out.println("No events found");
                 return;
             }
-            events.forEach(this::printEvent);
+
+            System.out.println("List of found Events:\n" + formatEventResponses(eventResponses));
 
         } catch (DomainException e) {
             System.out.println("Domain Error: " + e.getMessage());
@@ -104,12 +105,12 @@ public class EventController {
     private void listUpcomingEvents() {
         int days = ConsoleReader.readInt("\nEnter the number of days to display the next events (e.g., 7)."); //TODO revisar si se puede poner numero negativo y consecuencias
         try {
-            List<EventResponse> events = eventService.getUpcomingEvents(days);
-            if (events.isEmpty()) {
+            List<EventResponse> eventResponses = eventService.getUpcomingEvents(days);
+            if (eventResponses.isEmpty()) {
                 System.out.printf("There are no events in the next %s days", days);
                 return;
             }
-            events.forEach(this::printEvent);
+            System.out.println("List of Upcoming Events (in the next " + days + " days):\n" + formatEventResponses(eventResponses));
         } catch (DomainException e) {
             System.out.println("Domain Error: " + e.getMessage());
         } catch (DataAccessException e) {
@@ -123,8 +124,8 @@ public class EventController {
         UpdateEventRequest request = new UpdateEventRequest(id, data.title(), data.description(), data.date(), data.type(), data.eventSchedule());
 
         try {
-            EventResponse response = eventService.update(request);
-            System.out.printf("Task # %s updated successfully: \nTile: %s\nDate: %s\n%s", response.id(), response.title(), response.date(), response.warnings());
+            EventResponse eventResponse = eventService.update(request);
+            System.out.printf("Task # %s updated successfully: %s", eventResponse.id(), formatEventResponse(eventResponse));
         } catch (DomainException e) {
             System.out.println("Domain Error: " + e.getMessage());
         } catch (DataAccessException e) {
@@ -137,8 +138,8 @@ public class EventController {
     private void deleteEvent() {
         Long id = ConsoleReader.readLong("Enter an Event ID to delete: ");
         try {
-            eventService.delete(id);
-            System.out.println("Event #" + id + " deleted.");
+            EventResponse eventResponse = eventService.delete(id);
+            System.out.printf("Event #%s deleted successfully: %s", eventResponse.id(), formatEventResponse(eventResponse));
         } catch (DomainException e) {
             System.out.println("Domain Error: " + e.getMessage());
         } catch (DataAccessException e) {
@@ -152,7 +153,7 @@ public class EventController {
         Long id = ConsoleReader.readLong("Enter the Event ID to find: ");
         try {
             EventResponse response = eventService.getById(id);
-            printEvent(response);
+            System.out.printf("Event #%s found successfully : %s", response.id(), formatEventResponse(response));
         } catch (DomainException e) {
             System.out.println("Domain Error: " + e.getMessage());
         } catch (DataAccessException e) {
@@ -179,8 +180,8 @@ public class EventController {
         return new CreateEventRequest(title, body, date, type, repetition);
     }
 
-    private void printEvent(EventResponse eventResponse) {
-        System.out.printf("Id: %s | Title: %s | Description: %s | Date: %s | Type: %s | Schedule: %s. %s",
+    private String formatEventResponse(EventResponse eventResponse) {
+        return String.format("Id: %s | Title: %s | Description: %s | Date: %s | Type: %s | Schedule: %s. %s\n",
                 eventResponse.id(),
                 eventResponse.title(),
                 eventResponse.description(),
@@ -189,5 +190,14 @@ public class EventController {
                 eventResponse.schedule(),
                 eventResponse.warnings().toString()
         );
+    }
+
+    private String formatEventResponses(List<EventResponse> eventResponses) {
+        StringBuilder response = new StringBuilder();
+        for (EventResponse eventResponse : eventResponses) {
+            response.append(formatEventResponse(eventResponse)
+            );
+        }
+        return response.toString();
     }
 }

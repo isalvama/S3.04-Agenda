@@ -8,14 +8,14 @@ import java.util.Objects;
 import java.util.Optional;
 
 public class CalendarEvent {
-    private long id;
+    private Long id;
     private Title title;
     private Description description;
     private LocalDateTime date;
     private EventType type;
     private EventSchedule schedule;
 
-    public CalendarEvent(long id, Title title, Description description, LocalDateTime date, EventType type, EventSchedule schedule) {
+    public CalendarEvent(Long id, Title title, Description description, LocalDateTime date, EventType type, EventSchedule schedule) {
         this.id = id;
         this.title = Objects.requireNonNull(title, "event title can not be null");
         this.description = description;
@@ -26,7 +26,7 @@ public class CalendarEvent {
 
     public static CalendarEvent create(Title title, Description description, LocalDateTime date, EventType type, EventSchedule schedule) {
         return new CalendarEvent(
-                0L,
+                null,
                 title,
                 description,
                 date,
@@ -42,11 +42,11 @@ public class CalendarEvent {
     }
 
 
-    public long getId() {
+    public Long getId() {
         return id;
     }
 
-    public void setId(long id) {
+    public void setId(Long id) {
         this.id = id;
     }
 
@@ -58,8 +58,8 @@ public class CalendarEvent {
         this.title = title;
     }
 
-    public Description getDescription() {
-        return description;
+    public Optional<Description> getDescription() {
+        return Optional.of(description);
     }
 
     public void setDescription(Description description) {
@@ -82,8 +82,8 @@ public class CalendarEvent {
         this.type = type;
     }
 
-    public EventSchedule getSchedule() {
-        return schedule;
+    public Optional<EventSchedule> getSchedule() {
+        return Optional.of(schedule);
     }
 
     public void setSchedule(EventSchedule schedule) {

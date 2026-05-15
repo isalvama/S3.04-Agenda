@@ -102,7 +102,7 @@ public class EventController {
     }
 
     private void listUpcomingEvents() {
-        int days = ConsoleReader.readInt("\nEnter the number of days to display the next events (e.g., 7).");
+        int days = ConsoleReader.readInt("\nEnter the number of days to display the next events (e.g., 7)."); //TODO revisar si se puede poner numero negativo y consecuencias
         try {
             List<EventResponse> events = eventService.getUpcomingEvents(days);
             if (events.isEmpty()) {
@@ -118,7 +118,7 @@ public class EventController {
     }
 
     private void updateEvent() {
-        long id = readLong("Enter the event ID to update: ");
+        Long id = readLong("Enter the event ID to update: ");
         CreateEventRequest data = collectData("New ");
         UpdateEventRequest request = new UpdateEventRequest(id, data.title(), data.description(), data.date(), data.type(), data.eventSchedule());
 
@@ -135,7 +135,7 @@ public class EventController {
     }
 
     private void deleteEvent() {
-        long id = ConsoleReader.readLong("Enter an Event ID to delete: ");
+        Long id = ConsoleReader.readLong("Enter an Event ID to delete: ");
         try {
             eventService.delete(id);
             System.out.println("Event #" + id + " deleted.");
@@ -149,7 +149,7 @@ public class EventController {
     }
 
     private void findEventById() {
-        long id = ConsoleReader.readLong("Enter the Event ID to find: ");
+        Long id = ConsoleReader.readLong("Enter the Event ID to find: ");
         try {
             EventResponse response = eventService.getById(id);
             printEvent(response);
@@ -180,10 +180,14 @@ public class EventController {
     }
 
     private void printEvent(EventResponse eventResponse) {
-        System.out.printf("Id: %s | Title: %s | Date: %s",
+        System.out.printf("Id: %s | Title: %s | Description: %s | Date: %s | Type: %s | Schedule: %s. %s",
                 eventResponse.id(),
                 eventResponse.title(),
-                eventResponse.date()
+                eventResponse.description(),
+                eventResponse.date(),
+                eventResponse.type(),
+                eventResponse.schedule(),
+                eventResponse.warnings().toString()
         );
     }
 }

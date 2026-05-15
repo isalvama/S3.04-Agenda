@@ -20,7 +20,7 @@ import java.util.Optional;
 
 import static java.util.Objects.requireNonNull;
 
-public class EventServiceImpl implements EventService{
+public class EventServiceImpl implements EventService {
     private final EventRepository eventRepository;
 
     public EventServiceImpl(EventRepository eventRepository) {
@@ -35,7 +35,7 @@ public class EventServiceImpl implements EventService{
                 Title.of(eventRequest.title()),
                 eventRequest.description() != null ? Description.of(eventRequest.description()) : null,
                 eventRequest.date(),
-                eventRequest.type() != null ? EventType.valueOf(eventRequest.type().toUpperCase()) : EventType.OTHER, // TODO REViEW: AQUI YA SE PASA "OTHER" si el usario lo ha dejado en blanco en el controller
+                eventRequest.type() != null ? EventType.valueOf(eventRequest.type().toUpperCase()) : EventType.OTHER,
                 eventRequest.eventSchedule() != null ? EventSchedule.valueOf(eventRequest.eventSchedule().toUpperCase()) : null
         );
 
@@ -44,8 +44,9 @@ public class EventServiceImpl implements EventService{
 
         List<String> warnings = new ArrayList<>();
         event.checkIfDateIsInThePast(LocalDateTime.now()).ifPresent(warnings::add);
+        warnings.forEach(w -> response.warnings().add(w));
 
-        return toResponseModel(event, warnings);
+        return response;
     }
 
     @Override
@@ -60,7 +61,7 @@ public class EventServiceImpl implements EventService{
 
     @Override
     public EventResponse getById(long id) {
-       return eventRepository.findById(id).map(this::toResponseModel).
+        return eventRepository.findById(id).map(this::toResponseModel).
                 orElseThrow(() -> new EventNotFoundException("Search", id));
     }
 
@@ -95,35 +96,43 @@ public class EventServiceImpl implements EventService{
         return eventRepository.deleteById(id);
     }
 
-    private EventResponse toResponseModel(CalendarEvent event, List<String> warnings){
+    private EventResponse toResponseModel(CalendarEvent event, List<String> warningsService) {
+        List<String> warnings = new ArrayList<>(warningsService);
+
         return new EventResponse(
                 event.getId(),
                 event.getTitle().value(),
+                event.getDescription().map(Description::value).orElse("No Desc"),
                 event.getDate(),
+                event.getType().name(), //TODO Override toString (check documentation ab overriding toString in enums)
+                event.getSchedule().map(Enum::name).orElse("No Schedule Set"),
                 warnings
         );
     }
 
-    private EventResponse toResponseModel(CalendarEvent event){
+    private EventResponse toResponseModel(CalendarEvent event) {
         return new EventResponse(
                 event.getId(),
                 event.getTitle().value(),
+                event.getDescription().map(Description::value).orElse("No Desc"),
                 event.getDate(),
+                event.getType().name(),
+                event.getSchedule().map(Enum::name).orElse("No Schedule Set"),
                 Collections.emptyList()
         );
     }
 
-    private List<EventResponse> toResponseModel(List<CalendarEvent> events, List<String> warnings){
+    private List<EventResponse> toResponseModel(List<CalendarEvent> events, List<String> warnings) {
         List<EventResponse> response = new ArrayList<>();
-        for (CalendarEvent event : events){
+        for (CalendarEvent event : events) {
             response.add(toResponseModel(event, warnings));
         }
         return response;
     }
 
-    private List<EventResponse> toResponseModel(List<CalendarEvent> events){
+    private List<EventResponse> toResponseModel(List<CalendarEvent> events) {
         List<EventResponse> response = new ArrayList<>();
-        for (CalendarEvent event : events){
+        for (CalendarEvent event : events) {
             response.add(toResponseModel(event));
         }
         return response;

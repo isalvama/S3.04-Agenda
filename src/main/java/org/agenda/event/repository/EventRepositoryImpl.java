@@ -4,7 +4,6 @@ import org.agenda.event.model.CalendarEvent;
 import org.agenda.event.model.EventSchedule;
 import org.agenda.event.model.EventType;
 import org.agenda.shared.config.DatabaseConnection;
-import org.agenda.shared.exception.DataAccessException;
 import org.agenda.shared.domain.value_object.Description;
 import org.agenda.shared.domain.value_object.Title;
 
@@ -26,14 +25,14 @@ public class EventRepositoryImpl implements EventRepository {
 
             try (ResultSet generatedKeys = ps.getGeneratedKeys()) {
                 if (generatedKeys.next()) {
-                    long nextId = generatedKeys.getLong(1);
-                    event.setId(nextId);
+                    long newId = generatedKeys.getLong(1);
+                    event.setId(newId);
                     return Optional.of(event);
                 }
-                return Optional.empty();
             }
+                return Optional.empty();
         } catch (SQLException ex) {
-            throw new DataAccessException("Error saving the event in MySQL: " + ex.getMessage());
+            throw new EventDataAccessConnection("Error saving the event in MySQL: " + ex.getMessage());
         }
     }
 
@@ -46,7 +45,7 @@ public class EventRepositoryImpl implements EventRepository {
             mapEventToStatement(ps, event);
             return ps.executeUpdate() > 0;
         } catch (SQLException ex) {
-            throw new DataAccessException("Error saving the event in MySQL: " + ex.getMessage());
+            throw new EventDataAccessConnection("Error saving the event in MySQL: " + ex.getMessage());
         }
     }
 
@@ -59,13 +58,13 @@ public class EventRepositoryImpl implements EventRepository {
             ps.setLong(1, id);
             return ps.executeUpdate() > 0;
         } catch (SQLException ex) {
-            throw new DataAccessException("Error updating the event with id " + id + " in MySQL: " + ex.getMessage());
+            throw new EventDataAccessConnection("Error updating the event with id " + id + " in MySQL: " + ex.getMessage());
         }
     }
 
     @Override
     public Optional<CalendarEvent> findById(long id) {
-        String sql = "SELECT * FROM EVENT WHERE ID = ?";
+        String sql = "SELECT id, title, body, date, type FROM EVENT WHERE ID = ?";
 
         try (Connection connection = DatabaseConnection.getInstance().getConnection();
              PreparedStatement ps = connection.prepareStatement(sql)) {
@@ -77,56 +76,58 @@ public class EventRepositoryImpl implements EventRepository {
                 return Optional.empty();
             }
         } catch (SQLException ex) {
-            throw new DataAccessException("Error finding the Event with id " + id + " in MySQL: " + ex.getMessage());
+            throw new EventDataAccessConnection("Error finding the Event with id " + id + " in MySQL: " + ex.getMessage());
         }
     }
 
 
     @Override
     public List<CalendarEvent> findAll() {
-        String sql = "SELECT * FROM EVENT";
+        String sql = "SELECT id, title, body, date, type, schedule FROM event";
 
         try (Connection connection = DatabaseConnection.getInstance().getConnection();
              PreparedStatement ps = connection.prepareStatement(sql)) {
             ResultSet rs = ps.executeQuery();
 
             List<CalendarEvent> events = new ArrayList<>();
-
             while (rs.next()) {
                 events.add(mapStatementToEvent(rs));
             }
             return events;
+
         } catch (SQLException ex) {
-            throw new DataAccessException("Error finding events in Event table" + ex.getMessage());
+            throw new EventDataAccessConnection("Error finding events in Event table: " + ex.getMessage());
         }
     }
 
     @Override
     public List<CalendarEvent> findUpcomingEvents(int intervalDays) {
-        String sql = "SELECT * FROM EVENT WHERE date >= NOW() - INTERVAL ? DAY;";
+        String sql = "SELECT id, title, body, date, type, schedule FROM EVENT WHERE date >= NOW() - INTERVAL ? DAY;";
 
         try (Connection connection = DatabaseConnection.getInstance().getConnection();
              PreparedStatement ps = connection.prepareStatement(sql)) {
             ps.setInt(1, intervalDays);
             ResultSet rs = ps.executeQuery();
+
             List<CalendarEvent> events = new ArrayList<>();
             while (rs.next()) {
                 events.add(mapStatementToEvent(rs));
             }
             return events;
+
         } catch (SQLException e) {
-            throw new DataAccessException("Error finding events in Event table");
+            throw new EventDataAccessConnection("Error finding events in Event table");
         }
     }
 
     private void mapEventToStatement(PreparedStatement ps, CalendarEvent event) throws SQLException {
         ps.setString(1, event.getTitle().value());
-        ps.setString(2, event.getDescription() != null ? event.getDescription().value() : null);
+        ps.setString(2, event.getDescription().map(Description::value).orElse(null));
         ps.setTimestamp(3, Timestamp.valueOf(event.getDate()));
         ps.setObject(4, event.getType().name());
-        ps.setString(5, (event.getSchedule() != null) ? event.getSchedule().name() : null);
+        ps.setString(5, event.getSchedule().map(Enum::name).orElse(null));
         ps.setTimestamp(6, Timestamp.valueOf(LocalDateTime.now()));
-        if (event.getId() > 0) {
+        if (event.getId() == null) {
             ps.setLong(7, event.getId());
         }
     }

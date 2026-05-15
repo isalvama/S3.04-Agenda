@@ -2,8 +2,15 @@ package org.agenda.note.service;
 
 import org.agenda.note.dto.NoteRequest;
 import org.agenda.note.dto.NoteResponse;
+import org.agenda.note.exception.NoteNotFoundException;
 import org.agenda.note.model.Note;
 import org.agenda.note.repository.NoteRepository;
+import org.agenda.note.service.strategy.GetAllByTaskIdStrategy;
+import org.agenda.note.service.strategy.GetAllNotesStrategy;
+import org.agenda.note.service.strategy.NoteStrategy;
+import org.agenda.shared.domain.value_object.Description;
+import org.agenda.shared.domain.value_object.Title;
+import org.agenda.task.repository.TaskRepositoryImpl;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -11,18 +18,24 @@ import java.util.Objects;
 
 public class NoteServiceImpl implements NoteService {
     private final NoteRepository repository;
+    private final TaskRepositoryImpl taskRepository;
 
-    public NoteServiceImpl(NoteRepository repository){
+    public NoteServiceImpl(NoteRepository repository, TaskRepositoryImpl taskRepository){
         this.repository = Objects.requireNonNull(repository, "Repository cannot be null");
+        this.taskRepository = Objects.requireNonNull(taskRepository, "taskRepository cannot be null");
     }
 
     @Override
     public NoteResponse create(NoteRequest request) {
         validateRequest(request);
 
+        if(!taskRepository.existsById(request.taskId())){
+            throw new RuntimeException("Cannot create note: Task does not exist");
+        }
+
         Note note = new Note(
-                request.title(),
-                request.body(),
+                Title.of(request.title()),
+                Description.of(request.body()),
                 LocalDateTime.now(),
                 LocalDateTime.now(),
                 request.taskId());
@@ -35,21 +48,20 @@ public class NoteServiceImpl implements NoteService {
     public NoteResponse getById(Long id) {
         return repository.findById(validateId(id))
                 .map(NoteResponse::fromEntity)
-                .orElseThrow(() -> new RuntimeException(String.format("Note with ID %d not found", id)));
+                .orElseThrow(() -> new NoteNotFoundException(id));
     }
 
     @Override
     public List<NoteResponse> getAll() {
-        return repository.findAll().stream()
-                .map(NoteResponse::fromEntity)
-                .toList();
+        NoteStrategy strategy = new GetAllNotesStrategy(repository);
+        return strategy.execute();
     }
 
     @Override
     public List<NoteResponse> getAllByTaskId(Long taskId) {
-        return repository.findById(validateId(taskId)).stream()
-                .map(NoteResponse::fromEntity)
-                .toList();
+        validateId(taskId);
+        NoteStrategy strategy = new GetAllByTaskIdStrategy(repository, taskId);
+        return strategy.execute();
     }
 
     @Override
@@ -58,22 +70,21 @@ public class NoteServiceImpl implements NoteService {
         validateRequest(request);
 
         Note note = repository.findById(id)
-                .orElseThrow(() -> new RuntimeException(String.format("Cannot update: Note with id %d not found", id)));
+                .orElseThrow(() -> new NoteNotFoundException(id));
 
-        note.setTitle(request.title());
-        note.setBody(request.body());
+        note.setTitle(Title.of(request.title()));
+        note.setBody(Description.of(request.body()));
         note.setTaskId(request.taskId());
         note.setUpdatedAt(LocalDateTime.now());
 
         return NoteResponse.fromEntity(repository.save(note));
-
     }
 
     @Override
     public boolean delete(Long id) {
         validateId(id);
         if(!repository.existsById(id)){
-            throw new RuntimeException(String.format("Cannot delete: Note with id %d not found", id));
+            throw new NoteNotFoundException(id);
         }
 
         return repository.deleteById(id);

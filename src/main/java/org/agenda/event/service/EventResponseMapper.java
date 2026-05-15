@@ -17,7 +17,7 @@ public class EventResponseMapper {
                 event.getTitle().value(),
                 event.getDescription().map(Description::value).orElse("No Desc"),
                 event.getDate(),
-                event.getType().name(), //TODO Override toString (check documentation ab overriding toString in enums)
+                event.getType().name(),
                 event.getSchedule().map(Enum::name).orElse("No Schedule Set"),
                 warnings
         );
@@ -33,14 +33,6 @@ public class EventResponseMapper {
                 event.getSchedule().map(Enum::name).orElse("No Schedule Set"),
                 Collections.emptyList()
         );
-    }
-
-    public List<EventResponse> toResponseModels(List<CalendarEvent> events, List<String> warnings) {
-        List<EventResponse> response = new ArrayList<>();
-        for (CalendarEvent event : events) {
-            response.add(toResponseModel(event, warnings));
-        }
-        return response;
     }
 
     public List<EventResponse> toResponseModels(List<CalendarEvent> events) {

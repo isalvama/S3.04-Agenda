@@ -76,7 +76,6 @@ class ConsoleReaderTest {
         String consoleOutput = outputStream.toString();
         Assertions.assertTrue(consoleOutput.contains("Invalid Input: The input can't consist of less 2 letter/s"));
 
-                //.contains("Invalid Input: The input can't be a blank space"));
     }
 
     @Test

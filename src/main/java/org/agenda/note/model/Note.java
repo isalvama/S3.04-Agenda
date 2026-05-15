@@ -1,16 +1,22 @@
 package org.agenda.note.model;
 
+import org.agenda.shared.domain.value_object.Description;
+import org.agenda.shared.domain.value_object.Title;
+
 import java.time.LocalDateTime;
 
 public class Note {
     private Long id;
-    private String title;
-    private String body;
+    private Title title;
+    private Description body;
     private final LocalDateTime createdAt;
     private LocalDateTime updatedAt;
     private Long taskId;
 
-    public Note(Long id, String title, String body, LocalDateTime createdAt, LocalDateTime updatedAt, Long taskId) {
+    public Note(Long id, Title title, Description body, LocalDateTime createdAt, LocalDateTime updatedAt, Long taskId) {
+        if(taskId == null){
+            throw new IllegalArgumentException("taskId is required");
+        }
         this.id = id;
         this.title = title;
         this.body = body;
@@ -18,15 +24,15 @@ public class Note {
         this.updatedAt = updatedAt;
         this.taskId = taskId;
     }
-    public Note(String title, String body, LocalDateTime createdAt, LocalDateTime updatedAt, Long taskId){
+    public Note(Title title, Description body, LocalDateTime createdAt, LocalDateTime updatedAt, Long taskId){
         this(null, title, body, LocalDateTime.now(), LocalDateTime.now(), taskId );
     }
 
     public Long getId() { return id; }
 
-    public String getTitle() { return title; }
+    public Title getTitle() { return title; }
 
-    public String getBody() { return body; }
+    public Description getBody() { return body; }
 
     public LocalDateTime getCreatedAt() { return createdAt; }
 
@@ -42,9 +48,9 @@ public class Note {
         this.id = id;
     }
 
-    public void setTitle(String title) { this.title = title; }
+    public void setTitle(Title title) { this.title = title; }
 
-    public void setBody(String body) {
+    public void setBody(Description body) {
         this.body = body;
     }
 

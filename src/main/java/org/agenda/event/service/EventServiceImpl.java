@@ -22,6 +22,7 @@ import static java.util.Objects.requireNonNull;
 
 public class EventServiceImpl implements EventService {
     private final EventRepository eventRepository;
+    private final EventResponseMapper eventResponseMapper = new EventResponseMapper();
 
     public EventServiceImpl(EventRepository eventRepository) {
         this.eventRepository = requireNonNull(eventRepository);
@@ -39,7 +40,7 @@ public class EventServiceImpl implements EventService {
                 eventRequest.eventSchedule() != null ? EventSchedule.valueOf(eventRequest.eventSchedule().toUpperCase()) : null
         );
 
-        EventResponse response = eventRepository.save(event).map(this::toResponseModel).
+        EventResponse response = eventRepository.save(event).map(eventResponseMapper::toResponseModel).
                 orElseThrow(() -> new EventNotSavedException(String.format("Failed Save: Event \n%s\n could not be saved", event.getTitle())));
 
         List<String> warnings = new ArrayList<>();
@@ -51,17 +52,17 @@ public class EventServiceImpl implements EventService {
 
     @Override
     public List<EventResponse> getAll() {
-        return toResponseModel(eventRepository.findAll());
+        return eventResponseMapper.toResponseModels(eventRepository.findAll());
     }
 
     @Override
     public List<EventResponse> getUpcomingEvents(int intervalDays) {
-        return toResponseModel(eventRepository.findUpcomingEvents(intervalDays));
+        return eventResponseMapper.toResponseModels(eventRepository.findUpcomingEvents(intervalDays));
     }
 
     @Override
     public EventResponse getById(long id) {
-        return eventRepository.findById(id).map(this::toResponseModel).
+        return eventRepository.findById(id).map(eventResponseMapper::toResponseModel).
                 orElseThrow(() -> new EventNotFoundException("Search", id));
     }
 
@@ -85,56 +86,18 @@ public class EventServiceImpl implements EventService {
 
         eventRepository.updateById(event);
 
-        return toResponseModel(event, warnings);
+        return eventResponseMapper.toResponseModel(event, warnings);
     }
 
     @Override
-    public boolean delete(long id) {
-        eventRepository.findById(id)
+    public EventResponse delete(long id) {
+        final CalendarEvent event = eventRepository.findById(id)
                 .orElseThrow(() -> new EventNotFoundException("Delete", id));
 
-        return eventRepository.deleteById(id);
+        eventRepository.deleteById(id);
+
+        return eventResponseMapper.toResponseModel(event);
     }
 
-    private EventResponse toResponseModel(CalendarEvent event, List<String> warningsService) {
-        List<String> warnings = new ArrayList<>(warningsService);
 
-        return new EventResponse(
-                event.getId(),
-                event.getTitle().value(),
-                event.getDescription().map(Description::value).orElse("No Desc"),
-                event.getDate(),
-                event.getType().name(), //TODO Override toString (check documentation ab overriding toString in enums)
-                event.getSchedule().map(Enum::name).orElse("No Schedule Set"),
-                warnings
-        );
-    }
-
-    private EventResponse toResponseModel(CalendarEvent event) {
-        return new EventResponse(
-                event.getId(),
-                event.getTitle().value(),
-                event.getDescription().map(Description::value).orElse("No Desc"),
-                event.getDate(),
-                event.getType().name(),
-                event.getSchedule().map(Enum::name).orElse("No Schedule Set"),
-                Collections.emptyList()
-        );
-    }
-
-    private List<EventResponse> toResponseModel(List<CalendarEvent> events, List<String> warnings) {
-        List<EventResponse> response = new ArrayList<>();
-        for (CalendarEvent event : events) {
-            response.add(toResponseModel(event, warnings));
-        }
-        return response;
-    }
-
-    private List<EventResponse> toResponseModel(List<CalendarEvent> events) {
-        List<EventResponse> response = new ArrayList<>();
-        for (CalendarEvent event : events) {
-            response.add(toResponseModel(event));
-        }
-        return response;
-    }
 }

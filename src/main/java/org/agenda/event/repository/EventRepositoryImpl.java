@@ -14,6 +14,7 @@ import java.util.List;
 import java.util.Optional;
 
 public class EventRepositoryImpl implements EventRepository {
+
     @Override
     public Optional<CalendarEvent> save(CalendarEvent event) {
         String sql = "INSERT INTO EVENT(TITLE, BODY, DATE, TYPE, SCHEDULE, CREATED_AT) VALUES (?, ?, ?, ?, ?, ?)";
@@ -37,13 +38,13 @@ public class EventRepositoryImpl implements EventRepository {
     }
 
     @Override
-    public boolean updateById(CalendarEvent event) {
+    public void updateById(CalendarEvent event) {
         String sql = "UPDATE EVENT SET TITLE = ?, BODY = ?, DATE = ?, TYPE = ?, SCHEDULE = ?, UPDATED_AT = ? WHERE id = ?";
 
         try (Connection connection = DatabaseConnection.getInstance().getConnection();
              PreparedStatement ps = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
             mapEventToStatement(ps, event);
-            return ps.executeUpdate() > 0;
+            if (ps.executeUpdate() > 0) throw new EventDataAccessConnection((String.format("Error saving the event %s with id %s in MySQL. Event info: %s", event.getTitle(), event.getId(), event.toString())));
         } catch (SQLException ex) {
             throw new EventDataAccessConnection("Error saving the event in MySQL: " + ex.getMessage());
         }
@@ -87,14 +88,14 @@ public class EventRepositoryImpl implements EventRepository {
 
         try (Connection connection = DatabaseConnection.getInstance().getConnection();
              PreparedStatement ps = connection.prepareStatement(sql)) {
-            ResultSet rs = ps.executeQuery();
+            try (ResultSet rs = ps.executeQuery()) {
 
-            List<CalendarEvent> events = new ArrayList<>();
-            while (rs.next()) {
-                events.add(mapStatementToEvent(rs));
+                List<CalendarEvent> events = new ArrayList<>();
+                while (rs.next()) {
+                    events.add(mapStatementToEvent(rs));
+                }
+                return events;
             }
-            return events;
-
         } catch (SQLException ex) {
             throw new EventDataAccessConnection("Error finding events in Event table: " + ex.getMessage());
         }
@@ -107,16 +108,16 @@ public class EventRepositoryImpl implements EventRepository {
         try (Connection connection = DatabaseConnection.getInstance().getConnection();
              PreparedStatement ps = connection.prepareStatement(sql)) {
             ps.setInt(1, intervalDays);
-            ResultSet rs = ps.executeQuery();
+            try (ResultSet rs = ps.executeQuery()) {
 
-            List<CalendarEvent> events = new ArrayList<>();
-            while (rs.next()) {
-                events.add(mapStatementToEvent(rs));
+                List<CalendarEvent> events = new ArrayList<>();
+                while (rs.next()) {
+                    events.add(mapStatementToEvent(rs));
+                }
+                return events;
             }
-            return events;
-
         } catch (SQLException e) {
-            throw new EventDataAccessConnection("Error finding events in Event table");
+            throw new EventDataAccessConnection("Error finding events in Event table: " + e.getMessage());
         }
     }
 

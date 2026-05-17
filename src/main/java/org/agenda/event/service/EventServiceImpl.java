@@ -40,14 +40,13 @@ public class EventServiceImpl implements EventService {
                 eventRequest.eventSchedule() != null ? EventSchedule.valueOf(eventRequest.eventSchedule().toUpperCase()) : null
         );
 
-        EventResponse response = eventRepository.save(event).map(eventResponseMapper::toResponseModel).
+        CalendarEvent response = eventRepository.save(event).
                 orElseThrow(() -> new EventNotSavedException(String.format("Failed Save: Event \n%s\n could not be saved", event.getTitle())));
 
         List<String> warnings = new ArrayList<>();
         event.checkIfDateIsInThePast(LocalDateTime.now()).ifPresent(warnings::add);
-        warnings.forEach(w -> response.warnings().add(w));
 
-        return response;
+        return eventResponseMapper.toResponseModel(response, warnings);
     }
 
     @Override

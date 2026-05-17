@@ -59,7 +59,7 @@ public class CalendarEvent {
     }
 
     public Optional<Description> getDescription() {
-        return Optional.of(description);
+        return Optional.ofNullable(description);
     }
 
     public void setDescription(Description description) {
@@ -83,7 +83,7 @@ public class CalendarEvent {
     }
 
     public Optional<EventSchedule> getSchedule() {
-        return Optional.of(schedule);
+        return Optional.ofNullable(schedule);
     }
 
     public void setSchedule(EventSchedule schedule) {

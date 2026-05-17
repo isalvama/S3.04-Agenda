@@ -69,6 +69,10 @@ public class NoteServiceImpl implements NoteService {
         validateId(id);
         validateRequest(request);
 
+        if (!taskRepository.existsById(request.taskId())) {
+            throw new RuntimeException("Cannot update note: Task does not exist");
+        }
+
         Note note = repository.findById(id)
                 .orElseThrow(() -> new NoteNotFoundException(id));
 

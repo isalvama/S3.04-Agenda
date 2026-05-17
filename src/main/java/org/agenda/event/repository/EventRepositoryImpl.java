@@ -3,7 +3,6 @@ package org.agenda.event.repository;
 import org.agenda.event.model.CalendarEvent;
 import org.agenda.event.model.EventSchedule;
 import org.agenda.event.model.EventType;
-import org.agenda.shared.config.DatabaseConnection;
 import org.agenda.shared.domain.value_object.Description;
 import org.agenda.shared.domain.value_object.Title;
 
@@ -14,13 +13,17 @@ import java.util.List;
 import java.util.Optional;
 
 public class EventRepositoryImpl implements EventRepository {
+    private final Connection connection;
+
+    public EventRepositoryImpl(Connection connection) {
+        this.connection = connection;
+    }
 
     @Override
     public Optional<CalendarEvent> save(CalendarEvent event) {
         String sql = "INSERT INTO EVENT(TITLE, BODY, DATE, TYPE, SCHEDULE, CREATED_AT) VALUES (?, ?, ?, ?, ?, ?)";
 
-        try (Connection connection = DatabaseConnection.getInstance().getConnection();
-             PreparedStatement ps = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+        try (PreparedStatement ps = this.connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
            mapEventToStatement(ps, event);
            ps.executeUpdate();
 
@@ -41,12 +44,15 @@ public class EventRepositoryImpl implements EventRepository {
     public void updateById(CalendarEvent event) {
         String sql = "UPDATE EVENT SET TITLE = ?, BODY = ?, DATE = ?, TYPE = ?, SCHEDULE = ?, UPDATED_AT = ? WHERE id = ?";
 
-        try (Connection connection = DatabaseConnection.getInstance().getConnection();
-             PreparedStatement ps = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+        try (PreparedStatement ps = this.connection.prepareStatement(sql)) {
             mapEventToStatement(ps, event);
-            if (ps.executeUpdate() > 0) throw new EventDataAccessConnection((String.format("Error saving the event %s with id %s in MySQL. Event info: %s", event.getTitle(), event.getId(), event.toString())));
+            ps.setLong(7, event.getId());
+            int rowsAffected = ps.executeUpdate();
+            if (rowsAffected == 0){
+                throw new EventNotUpdatedException((String.format("Error updating the event %s with id %s in MySQL. Event info: %s", event.getTitle(), event.getId(), event.toString())));
+            }
         } catch (SQLException ex) {
-            throw new EventDataAccessConnection("Error saving the event in MySQL: " + ex.getMessage());
+            throw new EventDataAccessConnection("Error updating the event in MySQL: " + ex.getMessage());
         }
     }
 
@@ -54,21 +60,19 @@ public class EventRepositoryImpl implements EventRepository {
     public boolean deleteById(long id) {
         String sql = "DELETE FROM EVENT WHERE id = ?;";
 
-        try (Connection connection = DatabaseConnection.getInstance().getConnection();
-             PreparedStatement ps = connection.prepareStatement(sql)) {
+        try (PreparedStatement ps = this.connection.prepareStatement(sql)) {
             ps.setLong(1, id);
             return ps.executeUpdate() > 0;
         } catch (SQLException ex) {
-            throw new EventDataAccessConnection("Error updating the event with id " + id + " in MySQL: " + ex.getMessage());
+            throw new EventDataAccessConnection("Error deleting the event with id " + id + " in MySQL: " + ex.getMessage());
         }
     }
 
     @Override
     public Optional<CalendarEvent> findById(long id) {
-        String sql = "SELECT id, title, body, date, type FROM EVENT WHERE ID = ?";
+        String sql = "SELECT id, title, body, date, type, schedule FROM EVENT WHERE ID = ?";
 
-        try (Connection connection = DatabaseConnection.getInstance().getConnection();
-             PreparedStatement ps = connection.prepareStatement(sql)) {
+        try (PreparedStatement ps = this.connection.prepareStatement(sql)) {
             ps.setLong(1, id);
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
@@ -86,8 +90,7 @@ public class EventRepositoryImpl implements EventRepository {
     public List<CalendarEvent> findAll() {
         String sql = "SELECT id, title, body, date, type, schedule FROM event";
 
-        try (Connection connection = DatabaseConnection.getInstance().getConnection();
-             PreparedStatement ps = connection.prepareStatement(sql)) {
+        try (PreparedStatement ps = this.connection.prepareStatement(sql)) {
             try (ResultSet rs = ps.executeQuery()) {
 
                 List<CalendarEvent> events = new ArrayList<>();
@@ -103,11 +106,13 @@ public class EventRepositoryImpl implements EventRepository {
 
     @Override
     public List<CalendarEvent> findUpcomingEvents(int intervalDays) {
-        String sql = "SELECT id, title, body, date, type, schedule FROM EVENT WHERE date >= NOW() - INTERVAL ? DAY;";
+        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime futureLimit = now.plusDays(intervalDays);
+        String sql = "SELECT id, title, body, date, type, schedule FROM EVENT WHERE date BETWEEN ? AND ? ORDER BY date ASC;";
+        try (PreparedStatement ps = this.connection.prepareStatement(sql)) {
+            ps.setString(1, String.valueOf(now));
+            ps.setString(2, String.valueOf(futureLimit));
 
-        try (Connection connection = DatabaseConnection.getInstance().getConnection();
-             PreparedStatement ps = connection.prepareStatement(sql)) {
-            ps.setInt(1, intervalDays);
             try (ResultSet rs = ps.executeQuery()) {
 
                 List<CalendarEvent> events = new ArrayList<>();
@@ -128,9 +133,6 @@ public class EventRepositoryImpl implements EventRepository {
         ps.setObject(4, event.getType().name());
         ps.setString(5, event.getSchedule().map(Enum::name).orElse(null));
         ps.setTimestamp(6, Timestamp.valueOf(LocalDateTime.now()));
-        if (event.getId() == null) {
-            ps.setLong(7, event.getId());
-        }
     }
 
     private CalendarEvent mapStatementToEvent(ResultSet rs) throws SQLException {

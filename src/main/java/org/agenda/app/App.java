@@ -41,7 +41,7 @@ public class App {
         }
     }
 
-    private static void showMainMenu(Scanner scanner, TaskController taskController, NoteController noteController) {
+    public static void showMainMenu(Scanner scanner, TaskController taskController, NoteController noteController) {
         boolean running = true;
 
         while (running) {

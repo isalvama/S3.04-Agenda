@@ -25,4 +25,6 @@ public interface TaskService {
     boolean delete(Long id);
 
     List<TaskResponse> listTasks(TaskStrategy strategy);
+
+    boolean existsById(Long id);
 }

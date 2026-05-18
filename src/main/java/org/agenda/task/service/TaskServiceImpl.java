@@ -118,4 +118,9 @@ public class TaskServiceImpl implements TaskService {
     public List<TaskResponse> listTasks(TaskStrategy strategy) {
         return strategy.execute();
     }
+
+    @Override
+    public boolean existsById(Long id) {
+        return repository.existsById(id);
+    }
 }

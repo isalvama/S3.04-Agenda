@@ -2,9 +2,10 @@ package org.agenda.shared.console;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+
 import java.time.format.DateTimeParseException;
 import java.util.Arrays;
-import java.util.InputMismatchException;
+
 import java.util.Scanner;
 
 public class ConsoleReader {
@@ -38,7 +39,6 @@ public class ConsoleReader {
             }
         }
     }
-
 
     public static String readString(String message, int minLength){
         while(true) {

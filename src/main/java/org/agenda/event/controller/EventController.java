@@ -137,7 +137,7 @@ public class EventController {
     }
 
     private CreateEventRequest collectData(String wordToAddToQueries){
-        String title = ConsoleReader.validateString(String.format("%sTitle: ", wordToAddToQueries != null ? wordToAddToQueries : ""));
+        String title = ConsoleReader.readString(String.format("%sTitle: ", wordToAddToQueries != null ? wordToAddToQueries : ""),2);
 
         System.out.printf("%sBody: ", wordToAddToQueries != null ? wordToAddToQueries : "");
         String bodyInput = scanner.nextLine().trim();
@@ -146,7 +146,7 @@ public class EventController {
        String typeInput = ConsoleReader.readEnumName(EventType.class, String.format("%sType of Event (BIRTHDATE / APPOINTMENT / REMINDER / or leave empty for OTHER): ", wordToAddToQueries != null ? wordToAddToQueries : ""));
        String type = typeInput != null ? typeInput : "OTHER";
 
-        LocalDateTime date = ConsoleReader.readDate(String.format("%sEvent Date (dd/MM/yyyy HH:mm or leave empty to set it for tomorrow (+1 day)): %n", wordToAddToQueries != null ? wordToAddToQueries : ""), DATE_FORMAT);
+        LocalDateTime date = ConsoleReader.readDate(String.format("%sEvent Date (dd/MM/yyyy HH:mm or leave empty to set it for tomorrow (+1 day)): %n", wordToAddToQueries != null ? wordToAddToQueries : ""), DATE_FORMAT, LocalDateTime.now().plusDays(1));
 
         String repetition = ConsoleReader.readEnumName(EventSchedule.class, String.format("%sSchedule a repetition for the event (YEARLY / MONTHLY / WEEKLY / DAILY / HOURLY or leave empty for none):", wordToAddToQueries != null ? wordToAddToQueries : ""));
 

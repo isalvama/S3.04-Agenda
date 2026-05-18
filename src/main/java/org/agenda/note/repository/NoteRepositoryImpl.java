@@ -2,9 +2,11 @@ package org.agenda.note.repository;
 
 import org.agenda.note.dto.NoteRequest;
 import org.agenda.note.model.Note;
+import org.agenda.shared.domain.value_object.Description;
+import org.agenda.shared.domain.value_object.Title;
 import org.agenda.shared.exception.AgendaException;
+import org.agenda.shared.exception.DataAccessException;
 
-import javax.management.openmbean.InvalidOpenTypeException;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -19,7 +21,11 @@ public class NoteRepositoryImpl implements NoteRepository{
 
     @Override
     public Note save(Note note) {
-        validateRequest(new NoteRequest(note.getTitle(), note.getBody(), note.getTaskId()));
+        validateRequest(new NoteRequest(
+                note.getTitle().value(),
+                note.getBody().value(),
+                note.getTaskId()
+        ));
         return (note.getId() == null) ? insert(note) : update(note);
     }
 
@@ -33,13 +39,16 @@ public class NoteRepositoryImpl implements NoteRepository{
             }
             return note;
         } catch (SQLException e) {
-            throw new RuntimeException("Error inserting task: " + note.getTitle(), e);
+            throw new DataAccessException("Error inserting note: " + note.getTitle() + ". " + e.getMessage());
         }
     }
 
     public Note update(Note note){
         validateId(note.getId());
-        validateRequest(new NoteRequest(note.getTitle(), note.getBody(), note.getTaskId()));
+        validateRequest(new NoteRequest(
+                note.getTitle().value(),
+                note.getBody().value(),
+                note.getTaskId()));
         String sql = "UPDATE note SET title = ?, body = ?, task_id = ? WHERE id = ?";
         try(PreparedStatement ps = connection.prepareStatement(sql)){
             mapNoteToStatement(ps, note);
@@ -47,7 +56,7 @@ public class NoteRepositoryImpl implements NoteRepository{
             ps.executeUpdate();
             return note;
         } catch (SQLException e) {
-            throw new RuntimeException("Error updating note ID: " + note.getId(), e);
+            throw new DataAccessException("Error updating note ID: " + note.getId() + ". " + e.getMessage());
         }
     }
 
@@ -61,7 +70,7 @@ public class NoteRepositoryImpl implements NoteRepository{
                 return rs.next() ? Optional.of(mapRowToNote(rs)) : Optional.empty();
             }
         } catch (SQLException e) {
-            throw new RuntimeException("Error fetching note " + id, e);
+            throw new DataAccessException("Error fetching note " + id + ". " + e.getMessage());
         }
     }
 
@@ -77,7 +86,7 @@ public class NoteRepositoryImpl implements NoteRepository{
             }
         }
         catch (SQLException e){
-            throw new RuntimeException("Error fetching notes by task: " + taskId, e);
+            throw new DataAccessException("Error fetching notes by task: " + taskId + ". " + e.getMessage());
         }
         return notes;
     }
@@ -90,7 +99,7 @@ public class NoteRepositoryImpl implements NoteRepository{
             ResultSet rs = st.executeQuery(sql)){
             while (rs.next()) notes.add(mapRowToNote(rs));
         }catch (SQLException e){
-            throw new RuntimeException("Error listing all notes", e);
+            throw new DataAccessException("Error listing all notes. " + e.getMessage());
         }
         return notes;
     }
@@ -103,7 +112,7 @@ public class NoteRepositoryImpl implements NoteRepository{
             ps.setLong(1, id);
             return ps.executeUpdate() > 0;
         }catch (SQLException e){
-            throw new RuntimeException("Error deleting note " + id, e);
+            throw new DataAccessException("Error deleting note: " + id + ". " + e.getMessage());
         }
     }
 
@@ -117,21 +126,21 @@ public class NoteRepositoryImpl implements NoteRepository{
                 return rs.next();
             }
         }catch (SQLException e){
-            throw new RuntimeException("Error checking existence of note " + id, e);
+            throw new DataAccessException("Error checking existence of note: " + id + ". " + e.getMessage());
         }
     }
 
     private void mapNoteToStatement(PreparedStatement ps,  Note note) throws SQLException{
-        ps.setString(1, note.getTitle());
-        ps.setString(2, note.getBody());
+        ps.setString(1, note.getTitle().value());
+        ps.setString(2, note.getBody().value());
         ps.setLong(3, note.getTaskId());
     }
 
     private Note mapRowToNote(ResultSet rs) throws SQLException{
         return new Note(
                 rs.getLong("id"),
-                rs.getString("title"),
-                rs.getString("body"),
+                Title.of(rs.getString("title")),
+                Description.of(rs.getString("body")),
                 rs.getTimestamp("created_at").toLocalDateTime(),
                 rs.getTimestamp("updated_at").toLocalDateTime(),
                 rs.getLong("task_id")

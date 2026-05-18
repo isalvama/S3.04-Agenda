@@ -189,6 +189,7 @@ public class EventController {
     }
 
     private CreateEventRequest collectData(String wordToAddToQueries){
+
         String title = ConsoleReader.readString(String.format("%sTitle: ", wordToAddToQueries != null ? wordToAddToQueries : ""), 2);
 
         System.out.printf("%sBody: ", wordToAddToQueries != null ? wordToAddToQueries : "");

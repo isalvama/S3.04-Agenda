@@ -40,7 +40,6 @@ public class ConsoleReader {
         }
     }
 
-
     public static String readString(String message, int minLength){
         while(true) {
             System.out.println(message);

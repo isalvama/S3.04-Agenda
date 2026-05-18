@@ -53,6 +53,7 @@ services:
     depends_on:
       mysql-db:
         condition: service_healthy
+    profiles: ["interactive"]
 volumes:
   mysql-data:
     driver: local

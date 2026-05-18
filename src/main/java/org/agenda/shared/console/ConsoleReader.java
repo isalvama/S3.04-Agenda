@@ -1,28 +1,30 @@
 package org.agenda.shared.console;
 
-import org.agenda.shared.domain.exception.DomainException;
-
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+
 import java.time.format.DateTimeParseException;
 import java.util.Arrays;
-import java.util.InputMismatchException;
+
 import java.util.Scanner;
 
 public class ConsoleReader {
 
-    private static final Scanner SC = new Scanner(System.in);
+    private static Scanner scanner = new Scanner(System.in);
 
-    public static long readLong(String message){
+    public static void setScanner(Scanner newScanner){
+        scanner = newScanner;
+    }
+
+    public static Long readLong(String message){
         while (true){
             System.out.println(message);
             try {
-                long input = SC.nextLong();
-                SC.nextLine();
-                return input;
-            } catch (InputMismatchException e){
-                System.out.println("Invalid type: Please enter a valid number");
-                SC.nextLine();
+                long value = Long.parseLong(scanner.nextLine().trim());
+                if (value < 0) throw new InvalidInputTypeException("Number cannot be negative");
+                return value;
+            } catch (NumberFormatException | InvalidInputTypeException e){
+                System.out.printf("Invalid Input: %s. Please enter a valid number.", e.getMessage());
             }
         }
     }
@@ -31,48 +33,43 @@ public class ConsoleReader {
         while (true){
             System.out.println(message);
             try {
-                int input = SC.nextInt();
-                SC.nextLine();
-                return input;
-            } catch (InputMismatchException e){
-                System.out.println("Invalid Input: the Input is of an invalid type");
-                SC.nextLine();
+                return Integer.parseInt(scanner.nextLine().trim());
+            } catch (NumberFormatException e){
+                System.out.printf("Invalid Input: %s. Please enter a valid number.", e.getMessage());
             }
         }
     }
 
-
-    public static String validateString(String message){
+    public static String readString(String message, int minLength){
         while(true) {
+            System.out.println(message);
+            String input = scanner.nextLine();
             try {
-                return ConsoleReader.readString(message);
+                return ConsoleReader.validateString(input, minLength);
             } catch (InvalidInputTypeException e) {
-                System.out.println(e.getMessage());
+                System.out.println("Invalid Input: " + e.getMessage());
             }
         }
     }
 
-    public static String readString(String message) throws InvalidInputTypeException {
-        System.out.println(message);
-        String input = SC.nextLine();
+    private static String validateString(String input, int minLength) throws InvalidInputTypeException {
         if (input.isBlank()) {
-            throw new InvalidInputTypeException("Invalid Input: The input can't be a blank space");
-        } else if (input.trim().length() < 2) {
-            throw new InvalidInputTypeException("Invalid Input: The input can't consist of 0 or 1 only letter");
+            throw new InvalidInputTypeException("The input can't be a blank space");
+        } else if (input.trim().length() < minLength) {
+            throw new InvalidInputTypeException(String.format("The input can't consist of less %s letter/s", minLength));
         }
         return input;
     }
 
-
-
-    public static LocalDateTime readDate(String message, DateTimeFormatter DATE_FORMAT) {
+    public static LocalDateTime readDate(String message, DateTimeFormatter DATE_FORMAT, LocalDateTime alternativeDate) {
         while (true) {
             System.out.print(message);
-            String rawInput = SC.nextLine().trim();
+            String rawInput = scanner.nextLine().trim();
+            if (rawInput.isBlank()) return alternativeDate;
             try {
-                return rawInput.isBlank() ? LocalDateTime.now().plusDays(1) : LocalDateTime.parse(rawInput, DATE_FORMAT);
+                return LocalDateTime.parse(rawInput, DATE_FORMAT);
             } catch (DateTimeParseException e) {
-                System.out.println("Invalid date format: use the date format dd/MM/yyyy HH:mm");
+                System.out.printf("Invalid Date Format: %s Please use the indicated date format.", e.getMessage());
             }
         }
     }
@@ -80,18 +77,16 @@ public class ConsoleReader {
     public static <T extends Enum<T>> String readEnumName(Class<T> enumClass, String message) {
         while (true){
             System.out.print(message);
-            String rawInput = SC.nextLine().trim();
-            try {
-                return rawInput.isBlank() ? null : validateEnumName(rawInput, enumClass);
-            } catch (DomainException ex) {
-                System.err.println(ex.getMessage());
-            }
+            String rawInput = scanner.nextLine().trim().toUpperCase();
+            if (rawInput.isBlank()) return null;
+            boolean isValid = validateEnumName(rawInput, enumClass);
+            if (isValid) return rawInput;
+        System.out.printf("Invalid %s Name: \"%s\" does not match with %s's name of constants (%s)", enumClass.getName(), rawInput, enumClass.toString(), Arrays.toString(enumClass.getEnumConstants()));
         }
     }
 
-    private static <T extends Enum<T>>String validateEnumName(String name, Class<T> enumClass){
-        if (Arrays.stream(enumClass.getEnumConstants()).noneMatch(v -> v.toString().equalsIgnoreCase(name))) throw new DomainException(String.format("Invalid %s name: \"%s\" does not match with %s's name of constants (%s)", enumClass.getName(), name, enumClass.getName(), Arrays.toString(enumClass.getEnumConstants())));
-        return name.toUpperCase();
+    private static <T extends Enum<T>> boolean validateEnumName(String input, Class<T> enumClass){
+        return (Arrays.stream(enumClass.getEnumConstants()).anyMatch(v -> v.toString().equalsIgnoreCase(input)));
     }
 }
 

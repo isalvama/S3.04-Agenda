@@ -58,6 +58,7 @@ public class TaskController {
 
             if ("0".equals(choice)) {
                 System.out.println("Returning to main menu...");
+                running = false;
             } else {
                 menuActions.getOrDefault(choice,
                         () -> System.out.println("Invalid option. Please try again.")).run();

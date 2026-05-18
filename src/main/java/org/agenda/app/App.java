@@ -1,6 +1,5 @@
 package org.agenda.app;
 
-<<<<<<< HEAD
 import org.agenda.event.controller.EventController;
 import org.agenda.event.controller.EventNotifier;
 import org.agenda.event.repository.EventRepository;
@@ -8,11 +7,9 @@ import org.agenda.event.repository.EventRepositoryImpl;
 import org.agenda.event.service.EventRecurringService;
 import org.agenda.event.service.EventService;
 import org.agenda.event.service.EventServiceImpl;
-=======
 import org.agenda.note.controller.NoteController;
 import org.agenda.note.repository.NoteRepositoryImpl;
 import org.agenda.note.service.NoteServiceImpl;
->>>>>>> origin/dev
 import org.agenda.shared.config.DatabaseConnection;
 import org.agenda.task.controller.TaskController;
 import org.agenda.task.repository.TaskRepositoryImpl;
@@ -77,13 +74,8 @@ public class App {
 
             switch (choice) {
                 case "1" -> taskController.showMenu();
-<<<<<<< HEAD
-                case "2" -> System.out.println("Note module under development.");
-                case "3" -> eventController.showMenu();
-=======
                 case "2" -> noteController.showMenu();
-                case "3" -> System.out.println("Event module under development.");
->>>>>>> origin/dev
+                case "3" -> eventController.showMenu();
                 case "0" -> {
                     System.out.println("Goodbye!");
                     running = false;

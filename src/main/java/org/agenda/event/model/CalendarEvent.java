@@ -41,6 +41,25 @@ public class CalendarEvent {
                 : Optional.empty();
     }
 
+    public CalendarEvent createNextOccurrence() {
+        if (this.schedule == null) {
+            return null;
+        }
+        LocalDateTime newDate = switch (this.schedule) {
+            case YEARLY -> this.date.plusYears(1);
+            case MONTHLY -> this.date.plusMonths(1);
+            case WEEKLY -> this.date.plusWeeks(1);
+            case DAILY -> this.date.plusDays(1);
+            case HOURLY -> this.date.plusHours(1);
+        };
+        return CalendarEvent.create(
+                this.getTitle(),
+                this.getDescription().orElse(null),
+                newDate,
+                this.type,
+                this.schedule);
+    }
+
 
     public Long getId() {
         return id;

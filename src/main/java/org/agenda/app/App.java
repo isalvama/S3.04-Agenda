@@ -1,5 +1,12 @@
 package org.agenda.app;
 
+import org.agenda.event.controller.EventController;
+import org.agenda.event.controller.EventNotifier;
+import org.agenda.event.repository.EventRepository;
+import org.agenda.event.repository.EventRepositoryImpl;
+import org.agenda.event.service.EventRecurringService;
+import org.agenda.event.service.EventService;
+import org.agenda.event.service.EventServiceImpl;
 import org.agenda.shared.config.DatabaseConnection;
 import org.agenda.task.controller.TaskController;
 import org.agenda.task.repository.TaskRepositoryImpl;
@@ -8,6 +15,7 @@ import org.agenda.task.service.TaskServiceImpl;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.Scanner;
+import java.util.concurrent.*;
 
 public class App {
 
@@ -25,7 +33,19 @@ public class App {
 
             // EVENT DOMAIN
 
-            showMainMenu(scanner, taskController);
+            EventRepository eventRepository = new EventRepositoryImpl(connection);
+            EventService eventService = new EventServiceImpl(eventRepository);
+            EventController eventController = new EventController(eventService, scanner);
+
+            EventNotifier eventNotifier = new EventNotifier(eventService);
+
+            try(ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor()) {
+                EventRecurringService eventRecurringService = new EventRecurringService(eventRepository);
+                scheduler.scheduleAtFixedRate(eventRecurringService::processRecurringEvents, 0, 1, TimeUnit.MINUTES
+                );
+            }
+            eventNotifier.notifyAllEvents();
+                showMainMenu(scanner, taskController, eventController);
 
         } catch (SQLException e) {
             System.err.println("Failed to connect to database: " + e.getMessage());
@@ -34,7 +54,7 @@ public class App {
         }
     }
 
-    private static void showMainMenu(Scanner scanner, TaskController taskController) {
+    private static void showMainMenu(Scanner scanner, TaskController taskController, EventController eventController) {
         boolean running = true;
 
         while (running) {
@@ -50,7 +70,7 @@ public class App {
             switch (choice) {
                 case "1" -> taskController.showMenu();
                 case "2" -> System.out.println("Note module under development.");
-                case "3" -> System.out.println("Event module under development.");
+                case "3" -> eventController.showMenu();
                 case "0" -> {
                     System.out.println("Goodbye!");
                     running = false;

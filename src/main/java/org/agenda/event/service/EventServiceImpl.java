@@ -14,7 +14,6 @@ import org.agenda.shared.domain.value_object.Title;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 

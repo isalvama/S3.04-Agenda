@@ -13,7 +13,7 @@ public class DatabaseConnection {
     private static final long RETRY_DELAY_MS = 3_000;
 
     private static final String DB_URL = String.format(
-            "jdbc:mysql://%s:%s/%s?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC",
+            "jdbc:mysql://%s:%s/%s?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Europe/Madrid",
             getEnv("DB_HOST", "localhost"),
             getEnv("DB_PORT", "3306"),
             getEnv("DB_NAME", "agenda")

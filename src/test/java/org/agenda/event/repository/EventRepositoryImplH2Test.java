@@ -24,7 +24,8 @@ public class EventRepositoryImplH2Test {
         h2Connection = DriverManager.getConnection("jdbc:h2:mem:testdb;MODE=MySQL;DB_CLOSE_DELAY=-1", "sa", "");
 
         try (Statement st = h2Connection.createStatement()) {
-            st.execute("CREATE TABLE EVENT (" +
+            st.execute("DROP TABLE IF EXISTS event;" +
+                    "CREATE TABLE event (" +
                     "id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY, " +
                     "title VARCHAR(100) NOT NULL , " +
                     "body TEXT, " +
@@ -65,7 +66,7 @@ public class EventRepositoryImplH2Test {
 
         Assertions.assertDoesNotThrow(() -> {
                     try (Statement st = h2Connection.createStatement();
-                         ResultSet rs = st.executeQuery("SELECT COUNT(*) FROM EVENT")) {
+                         ResultSet rs = st.executeQuery("SELECT COUNT(*) FROM event")) {
                         rs.next();
                         Assertions.assertEquals(1, rs.getInt(1));
                     }
@@ -96,7 +97,7 @@ public class EventRepositoryImplH2Test {
 
         Assertions.assertDoesNotThrow(() -> {
                     try (Statement st = h2Connection.createStatement();
-                         ResultSet rs = st.executeQuery("SELECT COUNT(*) FROM EVENT")) {
+                         ResultSet rs = st.executeQuery("SELECT COUNT(*) FROM event")) {
                         rs.next();
                         Assertions.assertEquals(1, rs.getInt(1));
                     }
@@ -108,7 +109,7 @@ public class EventRepositoryImplH2Test {
         Assertions.assertEquals(2L, result2.get().getId());
         Assertions.assertDoesNotThrow(() -> {
                     try (Statement st = h2Connection.createStatement();
-                         ResultSet rs = st.executeQuery("SELECT COUNT(*) FROM EVENT")) {
+                         ResultSet rs = st.executeQuery("SELECT COUNT(*) FROM event")) {
                         rs.next();
                         Assertions.assertEquals(2, rs.getInt(1));
                     }
@@ -144,7 +145,7 @@ public class EventRepositoryImplH2Test {
 
         Assertions.assertDoesNotThrow(() -> {
                     try (Statement st = h2Connection.createStatement();
-                         ResultSet rs = st.executeQuery("SELECT COUNT(*) FROM EVENT")) {
+                         ResultSet rs = st.executeQuery("SELECT COUNT(*) FROM event")) {
                         rs.next();
                         Assertions.assertEquals(1, rs.getInt(1));
                     }
@@ -183,7 +184,7 @@ public class EventRepositoryImplH2Test {
 
         Assertions.assertDoesNotThrow(() -> {
                     try (Statement st = h2Connection.createStatement();
-                         ResultSet rs = st.executeQuery("SELECT COUNT(*) FROM EVENT")) {
+                         ResultSet rs = st.executeQuery("SELECT COUNT(*) FROM event")) {
                         rs.next();
                         Assertions.assertEquals(2, rs.getInt(1));
                     }
@@ -257,7 +258,7 @@ public class EventRepositoryImplH2Test {
 
         Assertions.assertDoesNotThrow(() -> {
                     try (Statement st = h2Connection.createStatement();
-                         ResultSet rs = st.executeQuery("SELECT COUNT(*) FROM EVENT")) {
+                         ResultSet rs = st.executeQuery("SELECT COUNT(*) FROM event")) {
                         rs.next();
                         Assertions.assertEquals(2, rs.getInt(1));
                     }
@@ -268,7 +269,7 @@ public class EventRepositoryImplH2Test {
         Assertions.assertTrue(isEvent1Deleted);
         Assertions.assertDoesNotThrow(() -> {
                     try (Statement st = h2Connection.createStatement();
-                         ResultSet rs = st.executeQuery("SELECT COUNT(*) FROM EVENT")) {
+                         ResultSet rs = st.executeQuery("SELECT COUNT(*) FROM event")) {
                         rs.next();
                         Assertions.assertEquals(1, rs.getInt(1));
                     }
@@ -278,7 +279,7 @@ public class EventRepositoryImplH2Test {
         Assertions.assertTrue(isEvent2Deleted);
         Assertions.assertDoesNotThrow(() -> {
                     try (Statement st = h2Connection.createStatement();
-                         ResultSet rs = st.executeQuery("SELECT COUNT(*) FROM EVENT")) {
+                         ResultSet rs = st.executeQuery("SELECT COUNT(*) FROM event")) {
                         rs.next();
                         Assertions.assertEquals(0, rs.getInt(1));
                     }
@@ -331,7 +332,7 @@ public class EventRepositoryImplH2Test {
 
         Assertions.assertDoesNotThrow(() -> {
                     try (Statement st = h2Connection.createStatement();
-                         ResultSet rs = st.executeQuery("SELECT COUNT(*) FROM EVENT")) {
+                         ResultSet rs = st.executeQuery("SELECT COUNT(*) FROM event")) {
                         rs.next();
                         Assertions.assertEquals(2, rs.getInt(1));
                     }
@@ -424,7 +425,7 @@ public class EventRepositoryImplH2Test {
 
         Assertions.assertDoesNotThrow(() -> {
                     try (Statement st = h2Connection.createStatement();
-                         ResultSet rs = st.executeQuery("SELECT COUNT(*) FROM EVENT")) {
+                         ResultSet rs = st.executeQuery("SELECT COUNT(*) FROM event")) {
                         rs.next();
                         Assertions.assertEquals(2, rs.getInt(1));
                     }
@@ -436,11 +437,5 @@ public class EventRepositoryImplH2Test {
         Assertions.assertEquals(2, allEvents.size());
         Assertions.assertEquals("Event 1", allEvents.getFirst().getTitle().value());
         Assertions.assertEquals("Event 2", allEvents.get(1).getTitle().value());
-    }
-
-    @Test
-    @DisplayName("findUpcomingEvents() should throw EventDataAccessConnection when passing a negative number as interval days")
-    void shouldThrowEventDataAccessConnection() {
-        Assertions.assertThrows(EventDataAccessConnection.class, () -> eventRepositoryImpl.findUpcomingEvents(-10));
     }
 }

@@ -21,7 +21,7 @@ public class EventRepositoryImpl implements EventRepository {
 
     @Override
     public Optional<CalendarEvent> save(CalendarEvent event) {
-        String sql = "INSERT INTO EVENT(TITLE, BODY, DATE, TYPE, SCHEDULE, CREATED_AT) VALUES (?, ?, ?, ?, ?, ?)";
+        String sql = "INSERT INTO event(TITLE, BODY, DATE, TYPE, SCHEDULE, CREATED_AT) VALUES (?, ?, ?, ?, ?, ?)";
 
         try (PreparedStatement ps = this.connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
            mapEventToStatement(ps, event);
@@ -42,7 +42,7 @@ public class EventRepositoryImpl implements EventRepository {
 
     @Override
     public void updateById(CalendarEvent event) {
-        String sql = "UPDATE EVENT SET TITLE = ?, BODY = ?, DATE = ?, TYPE = ?, SCHEDULE = ?, UPDATED_AT = ? WHERE id = ?";
+        String sql = "UPDATE event SET title = ?, BODY = ?, DATE = ?, TYPE = ?, SCHEDULE = ?, UPDATED_AT = ? WHERE id = ?";
 
         try (PreparedStatement ps = this.connection.prepareStatement(sql)) {
             mapEventToStatement(ps, event);
@@ -58,7 +58,7 @@ public class EventRepositoryImpl implements EventRepository {
 
     @Override
     public boolean deleteById(long id) {
-        String sql = "DELETE FROM EVENT WHERE id = ?;";
+        String sql = "DELETE FROM event WHERE id = ?;";
 
         try (PreparedStatement ps = this.connection.prepareStatement(sql)) {
             ps.setLong(1, id);
@@ -70,7 +70,7 @@ public class EventRepositoryImpl implements EventRepository {
 
     @Override
     public Optional<CalendarEvent> findById(long id) {
-        String sql = "SELECT id, title, body, date, type, schedule FROM EVENT WHERE ID = ?";
+        String sql = "SELECT id, title, body, date, type, schedule FROM event WHERE ID = ?";
 
         try (PreparedStatement ps = this.connection.prepareStatement(sql)) {
             ps.setLong(1, id);
@@ -108,7 +108,7 @@ public class EventRepositoryImpl implements EventRepository {
     public List<CalendarEvent> findUpcomingEvents(int intervalDays) {
         LocalDateTime now = LocalDateTime.now();
         LocalDateTime futureLimit = now.plusDays(intervalDays);
-        String sql = "SELECT id, title, body, date, type, schedule FROM EVENT WHERE date BETWEEN ? AND ? ORDER BY date ASC;";
+        String sql = "SELECT id, title, body, date, type, schedule FROM event WHERE date BETWEEN ? AND ? ORDER BY date ASC;";
         try (PreparedStatement ps = this.connection.prepareStatement(sql)) {
             ps.setString(1, String.valueOf(now));
             ps.setString(2, String.valueOf(futureLimit));
@@ -129,7 +129,7 @@ public class EventRepositoryImpl implements EventRepository {
     private void mapEventToStatement(PreparedStatement ps, CalendarEvent event) throws SQLException {
         ps.setString(1, event.getTitle().value());
         ps.setString(2, event.getDescription().map(Description::value).orElse(null));
-        ps.setTimestamp(3, Timestamp.valueOf(event.getDate()));
+        ps.setObject(3, event.getDate());
         ps.setObject(4, event.getType().name());
         ps.setString(5, event.getSchedule().map(Enum::name).orElse(null));
         ps.setTimestamp(6, Timestamp.valueOf(LocalDateTime.now()));

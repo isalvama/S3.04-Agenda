@@ -24,6 +24,7 @@ public class App {
 
     public static void run() {
         Scanner scanner = new Scanner(System.in);
+        ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
 
         try {
             Connection connection = DatabaseConnection.getInstance().getConnection();
@@ -43,18 +44,18 @@ public class App {
             EventService eventService = new EventServiceImpl(eventRepository);
             EventController eventController = new EventController(eventService, scanner);
 
-            EventNotifier eventNotifier = new EventNotifier(eventService);
+            EventRecurringService eventRecurringService = new EventRecurringService(eventRepository);
+            scheduler.scheduleAtFixedRate(eventRecurringService::processRecurringEvents, 0, 1, TimeUnit.MINUTES);
 
-            try(ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor()) {
-                EventRecurringService eventRecurringService = new EventRecurringService(eventRepository);
-                scheduler.scheduleAtFixedRate(eventRecurringService::processRecurringEvents, 0, 1, TimeUnit.MINUTES
-                );
-            }
+            EventNotifier eventNotifier = new EventNotifier(eventService);
             eventNotifier.notifyAllEvents();
+
             showMainMenu(scanner, taskController, noteController, eventController);
         } catch (SQLException e) {
             System.err.println("Failed to connect to database: " + e.getMessage());
         } finally {
+            System.out.println("Shutting down scheduler...");
+            scheduler.shutdown();
             scanner.close();
         }
     }

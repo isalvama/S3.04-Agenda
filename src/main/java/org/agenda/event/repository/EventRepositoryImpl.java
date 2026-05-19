@@ -132,11 +132,10 @@ public class EventRepositoryImpl implements EventRepository {
         ps.setObject(3, event.getDate());
         ps.setObject(4, event.getType().name());
         ps.setString(5, event.getSchedule().map(Enum::name).orElse(null));
-        ps.setTimestamp(6, Timestamp.valueOf(LocalDateTime.now()));
+        ps.setObject(6, LocalDateTime.now());
     }
 
     private CalendarEvent mapStatementToEvent(ResultSet rs) throws SQLException {
-
         Long id = rs.getLong("id");
         String title = rs.getString("title");
         String bodyRaw = rs.getString("body");

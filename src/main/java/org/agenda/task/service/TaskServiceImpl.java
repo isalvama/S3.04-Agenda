@@ -1,5 +1,7 @@
 package org.agenda.task.service;
 
+import org.agenda.shared.domain.value_object.Description;
+import org.agenda.shared.domain.value_object.Title;
 import org.agenda.task.dto.TaskRequest;
 import org.agenda.task.dto.TaskResponse;
 import org.agenda.task.exception.TaskNotFoundException;
@@ -22,11 +24,11 @@ public class TaskServiceImpl implements TaskService {
 
     @Override
     public TaskResponse create(TaskRequest request) {
-        validateRequest(request);
+        Objects.requireNonNull(request, "Task request cannot be null");
 
         Task task = new Task(
-                request.title(),
-                request.body(),
+                Title.of(request.title()),
+                Description.of(request.body()),
                 request.status(),
                 request.priority(),
                 request.expirationDate(),
@@ -67,13 +69,13 @@ public class TaskServiceImpl implements TaskService {
     @Override
     public TaskResponse update(Long id, TaskRequest request) {
         validateId(id);
-        validateRequest(request);
+        Objects.requireNonNull(request, "Task request cannot be null");
 
         Task task = repository.findById(id)
                 .orElseThrow(() -> new TaskNotFoundException(id));
 
-        task.setTitle(request.title());
-        task.setBody(request.body());
+        task.setTitle(Title.of(request.title()));
+        task.setBody(Description.of(request.body()));
         task.setStatus(request.status());
         task.setPriority(request.priority());
         task.setExpirationDate(request.expirationDate());
@@ -105,13 +107,6 @@ public class TaskServiceImpl implements TaskService {
 
     private Long validateId(Long id) {
         return Objects.requireNonNull(id, "ID cannot be null");
-    }
-
-    private void validateRequest(TaskRequest request) {
-        Objects.requireNonNull(request, "Task request cannot be null");
-        if (request.title() == null || request.title().isBlank()) {
-            throw new IllegalArgumentException("Task title is mandatory");
-        }
     }
 
     @Override

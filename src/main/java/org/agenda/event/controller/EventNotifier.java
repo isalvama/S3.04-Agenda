@@ -60,13 +60,11 @@ public class EventNotifier {
     }
 
     private void printSection(String title, List<EventResponse> eventResponsesToPrint){
-        System.out.printf("------ %s ------", title);
+        System.out.printf("------ %s ------\n", title);
         if (eventResponsesToPrint.isEmpty()){
             System.out.println("No events during this time period");
         } else {
-            System.out.println(eventFormatter.formatEventResponses(eventResponsesToPrint));
+            System.out.printf("%s\n", eventFormatter.formatEventResponses(eventResponsesToPrint));
         }
     }
-
-
 }

@@ -1,6 +1,7 @@
 package org.agenda;
 
 import org.agenda.app.App;
+import org.agenda.event.controller.EventController;
 import org.agenda.note.controller.NoteController;
 import org.agenda.task.controller.TaskController;
 import org.junit.jupiter.api.*;
@@ -23,6 +24,8 @@ class AppTest {
     private TaskController taskController;
     @Mock
     private NoteController noteController;
+    @Mock
+    private EventController eventController;
 
     private ByteArrayOutputStream output;
     private PrintStream originalOut;
@@ -41,7 +44,7 @@ class AppTest {
 
     private void runMenuWithInput(String input) {
         Scanner scanner = new Scanner(new ByteArrayInputStream(input.getBytes()));
-        App.showMainMenu(scanner, taskController, noteController);
+        App.showMainMenu(scanner, taskController, noteController, eventController);
     }
 
     @Nested

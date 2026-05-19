@@ -14,14 +14,14 @@ import org.agenda.shared.domain.value_object.Title;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
 import static java.util.Objects.requireNonNull;
 
-public class EventServiceImpl implements EventService{
+public class EventServiceImpl implements EventService {
     private final EventRepository eventRepository;
+    private final EventResponseMapper eventResponseMapper = new EventResponseMapper();
 
     public EventServiceImpl(EventRepository eventRepository) {
         this.eventRepository = requireNonNull(eventRepository);
@@ -35,32 +35,32 @@ public class EventServiceImpl implements EventService{
                 Title.of(eventRequest.title()),
                 eventRequest.description() != null ? Description.of(eventRequest.description()) : null,
                 eventRequest.date(),
-                eventRequest.type() != null ? EventType.valueOf(eventRequest.type().toUpperCase()) : EventType.OTHER, // TODO REViEW: AQUI YA SE PASA "OTHER" si el usario lo ha dejado en blanco en el controller
+                eventRequest.type() != null ? EventType.valueOf(eventRequest.type().toUpperCase()) : EventType.OTHER,
                 eventRequest.eventSchedule() != null ? EventSchedule.valueOf(eventRequest.eventSchedule().toUpperCase()) : null
         );
 
-        EventResponse response = eventRepository.save(event).map(this::toResponseModel).
+        CalendarEvent response = eventRepository.save(event).
                 orElseThrow(() -> new EventNotSavedException(String.format("Failed Save: Event \n%s\n could not be saved", event.getTitle())));
 
         List<String> warnings = new ArrayList<>();
         event.checkIfDateIsInThePast(LocalDateTime.now()).ifPresent(warnings::add);
 
-        return toResponseModel(event, warnings);
+        return eventResponseMapper.toResponseModel(response, warnings);
     }
 
     @Override
     public List<EventResponse> getAll() {
-        return toResponseModel(eventRepository.findAll());
+        return eventResponseMapper.toResponseModels(eventRepository.findAll());
     }
 
     @Override
     public List<EventResponse> getUpcomingEvents(int intervalDays) {
-        return toResponseModel(eventRepository.findUpcomingEvents(intervalDays));
+        return eventResponseMapper.toResponseModels(eventRepository.findUpcomingEvents(intervalDays));
     }
 
     @Override
     public EventResponse getById(long id) {
-       return eventRepository.findById(id).map(this::toResponseModel).
+        return eventRepository.findById(id).map(eventResponseMapper::toResponseModel).
                 orElseThrow(() -> new EventNotFoundException("Search", id));
     }
 
@@ -84,48 +84,18 @@ public class EventServiceImpl implements EventService{
 
         eventRepository.updateById(event);
 
-        return toResponseModel(event, warnings);
+        return eventResponseMapper.toResponseModel(event, warnings);
     }
 
     @Override
-    public boolean delete(long id) {
-        eventRepository.findById(id)
+    public EventResponse delete(long id) {
+        final CalendarEvent event = eventRepository.findById(id)
                 .orElseThrow(() -> new EventNotFoundException("Delete", id));
 
-        return eventRepository.deleteById(id);
+        eventRepository.deleteById(id);
+
+        return eventResponseMapper.toResponseModel(event);
     }
 
-    private EventResponse toResponseModel(CalendarEvent event, List<String> warnings){
-        return new EventResponse(
-                event.getId(),
-                event.getTitle().value(),
-                event.getDate(),
-                warnings
-        );
-    }
 
-    private EventResponse toResponseModel(CalendarEvent event){
-        return new EventResponse(
-                event.getId(),
-                event.getTitle().value(),
-                event.getDate(),
-                Collections.emptyList()
-        );
-    }
-
-    private List<EventResponse> toResponseModel(List<CalendarEvent> events, List<String> warnings){
-        List<EventResponse> response = new ArrayList<>();
-        for (CalendarEvent event : events){
-            response.add(toResponseModel(event, warnings));
-        }
-        return response;
-    }
-
-    private List<EventResponse> toResponseModel(List<CalendarEvent> events){
-        List<EventResponse> response = new ArrayList<>();
-        for (CalendarEvent event : events){
-            response.add(toResponseModel(event));
-        }
-        return response;
-    }
 }

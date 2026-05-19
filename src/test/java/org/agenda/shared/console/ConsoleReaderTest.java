@@ -36,6 +36,21 @@ class ConsoleReaderTest {
     }
 
     @Test
+    void readLongBlankShouldShowErrorInvalidMessageAndRetry(){
+        String input = "\n2345\n";
+        ConsoleReader.setScanner(new Scanner(new ByteArrayInputStream(input.getBytes())));
+        System.setOut(new PrintStream(outputStream));
+
+        Long result = ConsoleReader.readLong("Write a number:");
+        Assertions.assertEquals(2345, result);
+
+        String consoleOutput = outputStream.toString();
+        Assertions.assertTrue(consoleOutput
+                .contains("Invalid Input: "));
+        Assertions.assertTrue(consoleOutput.contains("Please enter a valid number"));
+    }
+
+    @Test
     void readLongShouldShowErrorNegativeNumberMessageAndRetry(){
         String input = "-5\n50\n";
         ConsoleReader.setScanner(new Scanner(new ByteArrayInputStream(input.getBytes())));

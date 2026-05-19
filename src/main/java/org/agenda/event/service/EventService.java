@@ -17,5 +17,5 @@ public interface EventService {
 
     EventResponse getById(long id);
 
-    boolean delete(long id);
+    EventResponse delete(long id);
 }

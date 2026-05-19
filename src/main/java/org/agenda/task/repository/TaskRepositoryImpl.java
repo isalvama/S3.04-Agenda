@@ -1,5 +1,7 @@
 package org.agenda.task.repository;
 
+import org.agenda.shared.domain.value_object.Description;
+import org.agenda.shared.domain.value_object.Title;
 import org.agenda.task.model.Task;
 import org.agenda.task.model.Status;
 import org.agenda.task.model.Priority;
@@ -130,8 +132,8 @@ public class TaskRepositoryImpl implements TaskRepository {
     private Task mapRowToTask(ResultSet rs) throws SQLException {
         return new Task(
                 rs.getLong("id"),
-                rs.getString("title"),
-                rs.getString("body"),
+                Title.of(rs.getString("title")),
+                Description.of(rs.getString("body")),
                 Status.fromSqlValue(rs.getString("status")),
                 Priority.fromSqlValue(rs.getString("priority")).orElse(null),
                 rs.getTimestamp("expiration_date").toLocalDateTime(),

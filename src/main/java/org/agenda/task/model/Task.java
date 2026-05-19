@@ -1,13 +1,16 @@
 package org.agenda.task.model;
 
+import org.agenda.shared.domain.value_object.Description;
+import org.agenda.shared.domain.value_object.Title;
+
 import java.time.LocalDateTime;
 import java.util.Optional;
 
 public class Task {
 
     private Long id;
-    private String title;
-    private String body;
+    private Title title;
+    private Description body;
     private Status status;
     private Priority priority;
     private LocalDateTime expirationDate;
@@ -15,7 +18,7 @@ public class Task {
     private LocalDateTime updatedAt;
     private Long eventId;
 
-    public Task(Long id, String title, String body, Status status, Priority priority, LocalDateTime expirationDate, LocalDateTime createdAt, LocalDateTime updatedAt, Long eventId) {
+    public Task(Long id, Title title, Description body, Status status, Priority priority, LocalDateTime expirationDate, LocalDateTime createdAt, LocalDateTime updatedAt, Long eventId) {
         this.id = id;
         this.title = title;
         this.body = body;
@@ -27,7 +30,7 @@ public class Task {
         this.eventId = eventId;
     }
 
-    public Task(String title, String body, Status status, Priority priority, LocalDateTime expirationDate, Long eventId) {
+    public Task(Title title, Description body, Status status, Priority priority, LocalDateTime expirationDate, Long eventId) {
         this(null, title, body, status, priority, expirationDate, LocalDateTime.now(), LocalDateTime.now(), eventId);
     }
 
@@ -36,11 +39,11 @@ public class Task {
     }
 
     public String getTitle() {
-        return title;
+        return title.value();
     }
 
     public String getBody() {
-        return body;
+        return body != null ? body.value() : null;
     }
 
     public Status getStatus() {
@@ -75,11 +78,11 @@ public class Task {
         this.id = id;
     }
 
-    public void setTitle(String title) {
+    public void setTitle(Title title) {
         this.title = title;
     }
 
-    public void setBody(String body) {
+    public void setBody(Description body) {
         this.body = body;
     }
 

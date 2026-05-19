@@ -1,5 +1,9 @@
 package org.agenda.task.service;
 
+import org.agenda.shared.domain.exception.InvalidDescriptionException;
+import org.agenda.shared.domain.exception.InvalidTitleException;
+import org.agenda.shared.domain.value_object.Description;
+import org.agenda.shared.domain.value_object.Title;
 import org.agenda.task.dto.TaskRequest;
 import org.agenda.task.dto.TaskResponse;
 import org.agenda.task.exception.TaskNotFoundException;
@@ -34,7 +38,7 @@ public class TaskServiceTest {
     }
 
     private Task createSampleTask() {
-        Task task = new Task("Buy groceries", "Milk, eggs, bread", Status.PENDING,
+        Task task = new Task(Title.of("Buy Groceries"), Description.of("Milk, eggs, bread"), Status.PENDING,
                 Priority.MEDIUM, LocalDateTime.now().plusDays(7), null);
         task.setId(1L);
         return task;
@@ -60,7 +64,7 @@ public class TaskServiceTest {
             assertAll("Task Response Validation",
                     () -> assertNotNull(response),
                     () -> assertEquals(1L, response.id()),
-                    () -> assertEquals("Buy groceries", response.title()),
+                    () -> assertEquals("Buy Groceries", response.title()),
                     () -> assertEquals(Status.PENDING, response.status())
             );
             verify(repository, times(1)).save(any(Task.class));
@@ -76,7 +80,7 @@ public class TaskServiceTest {
 
             assertNotNull(response);
             assertEquals(1L, response.id());
-            assertEquals("Buy groceries", response.title());
+            assertEquals("Buy Groceries", response.title());
             verify(repository, times(1)).findById(1L);
         }
 
@@ -84,7 +88,7 @@ public class TaskServiceTest {
         @DisplayName("getAll: returns list of all tasks")
         void getAllReturnsList() {
             Task task1 = createSampleTask();
-            Task task2 = new Task("Clean house", "Kitchen and  bathroom", Status.PENDING,
+            Task task2 = new Task(Title.of("Clean House"), Description.of("Kitchen and bathroom"), Status.PENDING,
                     Priority.LOW, LocalDateTime.now().plusDays(3), null);
             task2.setId(2L);
             when(repository.findAll()).thenReturn(List.of(task1, task2));
@@ -143,7 +147,7 @@ public class TaskServiceTest {
             when(repository.findById(1L)).thenReturn(Optional.of(existingTask));
             when(repository.save(any(Task.class))).thenReturn(existingTask);
 
-            TaskRequest updatedRequest = new TaskRequest("Updated title", "Update body",
+            TaskRequest updatedRequest = new TaskRequest("Updated title", "Updated body",
                     Status.IN_PROGRESS, Priority.HIGH, LocalDateTime.now().plusDays(14), null);
 
             TaskResponse response = service.update(1L, updatedRequest);
@@ -180,89 +184,119 @@ public class TaskServiceTest {
         }
     }
 
-        @Nested
-        @DisplayName("Unhappy Path Tests")
-        class UnhappyPath {
+    @Nested
+    @DisplayName("Unhappy Path Tests")
+    class UnhappyPath {
 
-            @Test
-            @DisplayName("create: null request throws NullPointerException")
-            void createWithNullRequestThrows() {
-                assertThrows(NullPointerException.class, () -> service.create(null));
-                verify(repository, never()).save(any());
-            }
+        @Test
+        @DisplayName("create: null request throws NullPointerException")
+        void createWithNullRequestThrows() {
+            assertThrows(NullPointerException.class, () -> service.create(null));
+            verify(repository, never()).save(any());
+        }
 
-            @Test
-            @DisplayName("create: null title throws IllegalArgumentException")
-            void createWithNullTitleThrows() {
-                TaskRequest request = new TaskRequest(null, "body", null, null,
-                        LocalDateTime.now().plusDays(7), null);
+        @Test
+        @DisplayName("create: null title throws InvalidTitleException")
+        void createWithNullTitleThrows() {
+            TaskRequest request = new TaskRequest(null, "body", null, null,
+                    LocalDateTime.now().plusDays(7), null);
 
-                assertThrows(IllegalArgumentException.class, () -> service.create(request));
-                verify(repository, never()).save(any());
-            }
+            assertThrows(InvalidTitleException.class, () -> service.create(request));
+            verify(repository, never()).save(any());
+        }
 
-            @Test
-            @DisplayName("create: blank title throws IllegalArgumentException")
-            void createWithBlankTitleThrows() {
-                TaskRequest request = new TaskRequest("  ", "body", null, null,
-                        LocalDateTime.now().plusDays(7), null);
+        @Test
+        @DisplayName("create: blank title throws InvalidTitleException")
+        void createWithBlankTitleThrows() {
+            TaskRequest request = new TaskRequest("  ", "body", null, null,
+                    LocalDateTime.now().plusDays(7), null);
 
-                assertThrows(IllegalArgumentException.class, () -> service.create(request));
-                verify(repository, never()).save(any());
-            }
+            assertThrows(InvalidTitleException.class, () -> service.create(request));
+            verify(repository, never()).save(any());
+        }
 
-            @Test
-            @DisplayName("getById: null id throws NullPointerException")
-            void getByIdWithNullIdThrows() {
-                assertThrows(NullPointerException.class, () -> service.getById(null));
-                verify(repository, never()).findById(any());
-            }
+        @Test
+        @DisplayName("create: null body throws InvalidDescriptionException")
+        void createWithNullBodyThrows() {
+            TaskRequest request = new TaskRequest("Valid title", null, null, null,
+                    LocalDateTime.now().plusDays(7), null);
 
-            @Test
-            @DisplayName("getById: non-existent id throws TaskNotFoundException")
-            void getByIdNotFoundThrows() {
-                when(repository.findById(99L)).thenReturn(Optional.empty());
+            assertThrows(InvalidDescriptionException.class, () -> service.create(request));
+            verify(repository, never()).save(any());
+        }
 
-                TaskNotFoundException ex = assertThrows(TaskNotFoundException.class, () -> service.getById(99L));
-                assertTrue(ex.getMessage().contains("99"));
-                verify(repository, times(1)).findById(99L);
-            }
+        @Test
+        @DisplayName("create: blank body throws InvalidDescriptionException")
+        void createWithBlankBodyThrows() {
+            TaskRequest request = new TaskRequest("Valid title", "  ", null, null,
+                    LocalDateTime.now().plusDays(7), null);
 
-            @Test
-            @DisplayName("markAsDone: null id throws NullPointerException")
-            void markAsDoneWithNullIdThrows() {
-                assertThrows(NullPointerException.class, () -> service.markAsDone(null));
-                verify(repository, never()).findById(any());
-            }
+            assertThrows(InvalidDescriptionException.class, () -> service.create(request));
+            verify(repository, never()).save(any());
+        }
 
-            @Test
-            @DisplayName("markAsDone: non-existent id throws TaskNotFoundException")
-            void markAsDoneNotFoundThrows() {
-                when(repository.findById(99L)).thenReturn(Optional.empty());
+        @Test
+        @DisplayName("create: title too short throws InvalidTitleException")
+        void createWithShortTitleThrows() {
+            TaskRequest request = new TaskRequest("A", "Valid body", null, null,
+                    LocalDateTime.now().plusDays(7), null);
 
-                assertThrows(TaskNotFoundException.class, () -> service.markAsDone(99L));
-                verify(repository, times(1)).findById(99L);
-                verify(repository, never()).save(any());
-            }
+            assertThrows(InvalidTitleException.class, () -> service.create(request));
+            verify(repository, never()).save(any());
+        }
 
-            @Test
-            @DisplayName("delete: null id throws NullPointerException")
-            void deleteNotFoundThrows() {
-                when(repository.existsById(99L)).thenReturn(false);
-                assertThrows(TaskNotFoundException.class, () -> service.delete(99L));
-                verify(repository, times(1)).existsById(99L);
-                verify(repository, never()).deleteById(any());
-            }
+        @Test
+        @DisplayName("getById: null id throws NullPointerException")
+        void getByIdWithNullIdThrows() {
+            assertThrows(NullPointerException.class, () -> service.getById(null));
+            verify(repository, never()).findById(any());
+        }
 
-            @Test
-            @DisplayName("update: non-existent id throws TaskNotFoundException")
-            void updateNotFoundThrows() {
-                when(repository.findById(99L)).thenReturn(Optional.empty());
+        @Test
+        @DisplayName("getById: non-existent id throws TaskNotFoundException")
+        void getByIdNotFoundThrows() {
+            when(repository.findById(99L)).thenReturn(Optional.empty());
 
-                TaskRequest request = createValidRequest();
-                assertThrows(TaskNotFoundException.class, () -> service.update(99L, request));
-                verify(repository, times(1)).findById(99L);
-                verify(repository, never()).save(any());
-            }
+            TaskNotFoundException ex = assertThrows(TaskNotFoundException.class, () -> service.getById(99L));
+            assertTrue(ex.getMessage().contains("99"));
+            verify(repository, times(1)).findById(99L);
+        }
+
+        @Test
+        @DisplayName("markAsDone: null id throws NullPointerException")
+        void markAsDoneWithNullIdThrows() {
+            assertThrows(NullPointerException.class, () -> service.markAsDone(null));
+            verify(repository, never()).findById(any());
+        }
+
+        @Test
+        @DisplayName("markAsDone: non-existent id throws TaskNotFoundException")
+        void markAsDoneNotFoundThrows() {
+            when(repository.findById(99L)).thenReturn(Optional.empty());
+
+            assertThrows(TaskNotFoundException.class, () -> service.markAsDone(99L));
+            verify(repository, times(1)).findById(99L);
+            verify(repository, never()).save(any());
+        }
+
+        @Test
+        @DisplayName("delete: non-existent id throws TaskNotFoundException")
+        void deleteNotFoundThrows() {
+            when(repository.existsById(99L)).thenReturn(false);
+            assertThrows(TaskNotFoundException.class, () -> service.delete(99L));
+            verify(repository, times(1)).existsById(99L);
+            verify(repository, never()).deleteById(any());
+        }
+
+        @Test
+        @DisplayName("update: non-existent id throws TaskNotFoundException")
+        void updateNotFoundThrows() {
+            when(repository.findById(99L)).thenReturn(Optional.empty());
+
+            TaskRequest request = createValidRequest();
+            assertThrows(TaskNotFoundException.class, () -> service.update(99L, request));
+            verify(repository, times(1)).findById(99L);
+            verify(repository, never()).save(any());
         }
     }
+}

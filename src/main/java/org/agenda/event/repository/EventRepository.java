@@ -11,6 +11,6 @@ public interface EventRepository {
     List<CalendarEvent> findAll();
     List<CalendarEvent> findUpcomingEvents(int intervalDays);
 
-    boolean updateById(CalendarEvent event);
+    void updateById(CalendarEvent event);
     boolean deleteById(long id);
 }

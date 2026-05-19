@@ -1,5 +1,12 @@
 package org.agenda.app;
 
+import org.agenda.event.controller.EventController;
+import org.agenda.event.controller.EventNotifier;
+import org.agenda.event.repository.EventRepository;
+import org.agenda.event.repository.EventRepositoryImpl;
+import org.agenda.event.service.EventRecurringService;
+import org.agenda.event.service.EventService;
+import org.agenda.event.service.EventServiceImpl;
 import org.agenda.note.controller.NoteController;
 import org.agenda.note.repository.NoteRepositoryImpl;
 import org.agenda.note.service.NoteServiceImpl;
@@ -11,11 +18,13 @@ import org.agenda.task.service.TaskServiceImpl;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.Scanner;
+import java.util.concurrent.*;
 
 public class App {
 
     public static void run() {
         Scanner scanner = new Scanner(System.in);
+        ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
 
         try {
             Connection connection = DatabaseConnection.getInstance().getConnection();
@@ -31,17 +40,27 @@ public class App {
             NoteController noteController = new NoteController(noteService, taskService);
 
             // EVENT DOMAIN
+            EventRepository eventRepository = new EventRepositoryImpl(connection);
+            EventService eventService = new EventServiceImpl(eventRepository);
+            EventController eventController = new EventController(eventService, scanner);
 
-            showMainMenu(scanner, taskController, noteController);
+            EventRecurringService eventRecurringService = new EventRecurringService(eventRepository);
+            scheduler.scheduleAtFixedRate(eventRecurringService::processRecurringEvents, 0, 1, TimeUnit.MINUTES);
 
+            EventNotifier eventNotifier = new EventNotifier(eventService);
+            eventNotifier.notifyAllEvents();
+
+            showMainMenu(scanner, taskController, noteController, eventController);
         } catch (SQLException e) {
             System.err.println("Failed to connect to database: " + e.getMessage());
         } finally {
+            System.out.println("Shutting down scheduler...");
+            scheduler.shutdown();
             scanner.close();
         }
     }
 
-    public static void showMainMenu(Scanner scanner, TaskController taskController, NoteController noteController) {
+    public static void showMainMenu(Scanner scanner, TaskController taskController, NoteController noteController, EventController eventController) {
         boolean running = true;
 
         while (running) {
@@ -57,7 +76,7 @@ public class App {
             switch (choice) {
                 case "1" -> taskController.showMenu();
                 case "2" -> noteController.showMenu();
-                case "3" -> System.out.println("Event module under development.");
+                case "3" -> eventController.showMenu();
                 case "0" -> {
                     System.out.println("Goodbye!");
                     running = false;

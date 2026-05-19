@@ -8,14 +8,14 @@ import java.util.Objects;
 import java.util.Optional;
 
 public class CalendarEvent {
-    private long id;
+    private Long id;
     private Title title;
     private Description description;
     private LocalDateTime date;
     private EventType type;
     private EventSchedule schedule;
 
-    public CalendarEvent(long id, Title title, Description description, LocalDateTime date, EventType type, EventSchedule schedule) {
+    public CalendarEvent(Long id, Title title, Description description, LocalDateTime date, EventType type, EventSchedule schedule) {
         this.id = id;
         this.title = Objects.requireNonNull(title, "event title can not be null");
         this.description = description;
@@ -26,7 +26,7 @@ public class CalendarEvent {
 
     public static CalendarEvent create(Title title, Description description, LocalDateTime date, EventType type, EventSchedule schedule) {
         return new CalendarEvent(
-                0L,
+                null,
                 title,
                 description,
                 date,
@@ -41,12 +41,31 @@ public class CalendarEvent {
                 : Optional.empty();
     }
 
+    public CalendarEvent createNextOccurrence() {
+        if (this.schedule == null) {
+            return null;
+        }
+        LocalDateTime newDate = switch (this.schedule) {
+            case YEARLY -> this.date.plusYears(1);
+            case MONTHLY -> this.date.plusMonths(1);
+            case WEEKLY -> this.date.plusWeeks(1);
+            case DAILY -> this.date.plusDays(1);
+            case HOURLY -> this.date.plusHours(1);
+        };
+        return CalendarEvent.create(
+                this.getTitle(),
+                this.getDescription().orElse(null),
+                newDate,
+                this.type,
+                this.schedule);
+    }
 
-    public long getId() {
+
+    public Long getId() {
         return id;
     }
 
-    public void setId(long id) {
+    public void setId(Long id) {
         this.id = id;
     }
 
@@ -58,8 +77,8 @@ public class CalendarEvent {
         this.title = title;
     }
 
-    public Description getDescription() {
-        return description;
+    public Optional<Description> getDescription() {
+        return Optional.ofNullable(description);
     }
 
     public void setDescription(Description description) {
@@ -82,8 +101,8 @@ public class CalendarEvent {
         this.type = type;
     }
 
-    public EventSchedule getSchedule() {
-        return schedule;
+    public Optional<EventSchedule> getSchedule() {
+        return Optional.ofNullable(schedule);
     }
 
     public void setSchedule(EventSchedule schedule) {

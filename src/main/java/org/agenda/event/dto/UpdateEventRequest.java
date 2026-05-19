@@ -6,6 +6,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.time.LocalDateTime;
 
-public record UpdateEventRequest(long id, @Nullable String title, @Nullable String description, @Nullable LocalDateTime date, @Nullable String type, @Nullable String eventSchedule) {
+public record UpdateEventRequest(Long id, @Nullable String title, @Nullable String description, @Nullable LocalDateTime date, @Nullable String type, @Nullable String eventSchedule) {
 
 }

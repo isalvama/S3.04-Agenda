@@ -2,10 +2,8 @@ package org.agenda.shared.console;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-
 import java.time.format.DateTimeParseException;
 import java.util.Arrays;
-
 import java.util.Scanner;
 
 public class ConsoleReader {
@@ -33,8 +31,10 @@ public class ConsoleReader {
         while (true){
             System.out.println(message);
             try {
-                return Integer.parseInt(scanner.nextLine().trim());
-            } catch (NumberFormatException e){
+                int number = Integer.parseInt(scanner.nextLine().trim());
+                if (number < 0) throw new RuntimeException("Number should not be negative");
+                return number;
+            } catch (RuntimeException e){
                 System.out.printf("Invalid Input: %s. Please enter a valid number.", e.getMessage());
             }
         }

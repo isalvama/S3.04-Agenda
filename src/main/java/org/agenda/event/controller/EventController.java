@@ -112,21 +112,6 @@ public class EventController {
         }
     }
 
-    public void showTodayAndTomorrowEvents(){
-        try {
-            List<EventResponse> eventResponses = eventService.getUpcomingEvents(1);
-            if (eventResponses.isEmpty()) {
-                System.out.println("There are no events for today or tomorrow");
-                return;
-            }
-            System.out.println("List of Upcoming Events for today and tomorrow:\n" + eventFormatter.formatEventResponses(eventResponses));
-        } catch (DomainException e) {
-            System.out.println("Domain Error: " + e.getMessage());
-        } catch (DataAccessException e) {
-            System.out.println("Error in DataBase: " + e.getMessage());
-        }
-    }
-
     private void listUpcomingEvents() {
         int days = ConsoleReader.readInt("\nEnter the number of days to display the next events (e.g., 5)");
         try {

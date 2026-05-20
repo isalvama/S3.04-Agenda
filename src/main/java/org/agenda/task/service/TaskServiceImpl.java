@@ -28,7 +28,7 @@ public class TaskServiceImpl implements TaskService {
 
         Task task = new Task(
                 Title.of(request.title()),
-                Description.of(request.body()),
+                request.body() != null && !request.body().isBlank() ? Description.of(request.body()) : null,
                 request.status(),
                 request.priority(),
                 request.expirationDate(),
@@ -75,7 +75,7 @@ public class TaskServiceImpl implements TaskService {
                 .orElseThrow(() -> new TaskNotFoundException(id));
 
         task.setTitle(Title.of(request.title()));
-        task.setBody(Description.of(request.body()));
+        task.setBody(request.body() != null && !request.body().isBlank() ? Description.of(request.body()) : null);
         task.setStatus(request.status());
         task.setPriority(request.priority());
         task.setExpirationDate(request.expirationDate());

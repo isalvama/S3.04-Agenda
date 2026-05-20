@@ -182,6 +182,34 @@ public class TaskServiceTest {
             assertEquals(expectedResponse, result);
             verify(mockStrategy, times(1)).execute();
         }
+
+        @Test
+        @DisplayName("create: null body creates task with null description")
+        void createWithNullBodySucceeds() {
+            TaskRequest request = new TaskRequest("Valid title", null, null,
+                    Priority.MEDIUM, LocalDateTime.now().plusDays(7), null);
+            Task savedTask = createSampleTask();
+            when(repository.save(any(Task.class))).thenReturn(savedTask);
+
+            TaskResponse response = service.create(request);
+
+            assertNotNull(response);
+            verify(repository, times(1)).save(any(Task.class));
+        }
+
+        @Test
+        @DisplayName("create: blank body creates task with null description")
+        void createWithBlankBodySucceeds() {
+            TaskRequest request = new TaskRequest("Valid title", "  ", null,
+                    Priority.MEDIUM, LocalDateTime.now().plusDays(7), null);
+            Task savedTask = createSampleTask();
+            when(repository.save(any(Task.class))).thenReturn(savedTask);
+
+            TaskResponse response = service.create(request);
+
+            assertNotNull(response);
+            verify(repository, times(1)).save(any(Task.class));
+        }
     }
 
     @Nested
@@ -212,26 +240,6 @@ public class TaskServiceTest {
                     LocalDateTime.now().plusDays(7), null);
 
             assertThrows(InvalidTitleException.class, () -> service.create(request));
-            verify(repository, never()).save(any());
-        }
-
-        @Test
-        @DisplayName("create: null body throws InvalidDescriptionException")
-        void createWithNullBodyThrows() {
-            TaskRequest request = new TaskRequest("Valid title", null, null, null,
-                    LocalDateTime.now().plusDays(7), null);
-
-            assertThrows(InvalidDescriptionException.class, () -> service.create(request));
-            verify(repository, never()).save(any());
-        }
-
-        @Test
-        @DisplayName("create: blank body throws InvalidDescriptionException")
-        void createWithBlankBodyThrows() {
-            TaskRequest request = new TaskRequest("Valid title", "  ", null, null,
-                    LocalDateTime.now().plusDays(7), null);
-
-            assertThrows(InvalidDescriptionException.class, () -> service.create(request));
             verify(repository, never()).save(any());
         }
 

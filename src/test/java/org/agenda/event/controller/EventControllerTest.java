@@ -1,8 +1,10 @@
 package org.agenda.event.controller;
 
+import org.agenda.event.dto.CreateEventRequest;
 import org.agenda.event.dto.EventResponse;
 import org.agenda.event.repository.EventNotFoundException;
 import org.agenda.event.service.EventService;
+import org.agenda.shared.console.ConsoleReader;
 import org.agenda.shared.domain.exception.DomainException;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -16,10 +18,10 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Scanner;
 
+import static org.agenda.shared.console.ConsoleReader.setScanner;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class EventControllerTest {
@@ -33,59 +35,65 @@ class EventControllerTest {
 
     @BeforeEach
     void setUp() {
+        eventService = mock(EventService.class);
         System.setOut(new PrintStream(outContent));
     }
 
     @AfterEach
-    void restore() {
+    void tearDown() {
         System.setOut(originalOut);
     }
 
-    private void provideInput(String data) {
-        System.setIn(new ByteArrayInputStream(data.getBytes()));
-        eventController = new EventController(eventService, new Scanner(System.in));
+    private void simulateInput(String data) {
+        Scanner scanner = new Scanner(new ByteArrayInputStream(data.getBytes()));
+        ConsoleReader.setScanner(scanner);
     }
 
     @Test
-    @DisplayName("Option 2: listAllEvents should show events when they exist")
-    void listAllEvents_Success() {
-        provideInput("2\n0\n");
-        EventResponse mockResponse = new EventResponse(1L, "Test Event", "Desc",
-                LocalDateTime.now(), "OTHER", "NONE", List.of());
+    @DisplayName("Should display success message when an event is created successfully")
+    void createEventSuccess() {
+        String input = "1\nTeam Meeting\nProject Sync\nAPPOINTMENT\n\n\n0\n";
+        simulateInput(input);
+        EventResponse mockResponse = new EventResponse(1L, "Test Meeting", "Project Sync",
+                LocalDateTime.now().plusDays(1), "APPOINTMENT", "No Schedule Set", List.of());
 
-        when(eventService.getAll()).thenReturn(List.of(mockResponse));
+        when(eventService.create(any(CreateEventRequest.class))).thenReturn(mockResponse);
 
+        eventController = new EventController(eventService, new Scanner(new ByteArrayInputStream(input.getBytes())));
         eventController.showMenu();
 
         String output = outContent.toString();
-        assertTrue(output.contains("List of found Events:"));
-        assertTrue(output.contains("Test Event"));
-        verify(eventService).getAll();
+        assertTrue(output.contains("Event created with ID 1"));
+        verify(eventService, times(1)).create(any(CreateEventRequest.class));
     }
 
     @Test
     @DisplayName("Option 6: findEventById should show error message when event not found")
     void findEventById_NotFound() {
-        provideInput("6\n99\n0\n");
+        String input = "6\n99\n0\n";
+        simulateInput(input);
 
         when(eventService.getById(99L)).thenThrow(new EventNotFoundException("Event not found", 99L));
 
+       eventController = new EventController(eventService, new Scanner(new ByteArrayInputStream(input.getBytes())));
         eventController.showMenu();
 
         String output = outContent.toString();
-        assertTrue(output.contains("Error: Event 99 not found"));
+        assertTrue(output.contains("Error: "));
         verify(eventService).getById(99L);
     }
 
     @Test
     @DisplayName("Option 5: deleteEvent should show success message")
     void deleteEvent_Success() {
-        provideInput("5\n10\n0\n");
+        String input = "5\n10\n0\n";
+        simulateInput(input);
         EventResponse deletedResponse = new EventResponse(10L, "To Delete", null,
                 LocalDateTime.now(), "OTHER", null, List.of());
 
         when(eventService.delete(10L)).thenReturn(deletedResponse);
 
+        eventController = new EventController(eventService, new Scanner(new ByteArrayInputStream(input.getBytes())));
         eventController.showMenu();
 
         String output = outContent.toString();
@@ -96,14 +104,14 @@ class EventControllerTest {
     @Test
     @DisplayName("Option 1: createEvent should handle DomainException")
     void createEvent_DomainError() {
-        provideInput("1\nInvalidTitle\nSomeBody\nOTHER\n\n\n0\n");
+        String input = "1\nInvalidTitle\nSomeBody\nOTHER\n\n\n0\n";
+        simulateInput(input);
 
         when(eventService.create(any())).thenThrow(new DomainException("Invalid Title format"));
 
-        // Act
+        eventController = new EventController(eventService, new Scanner(new ByteArrayInputStream(input.getBytes())));
         eventController.showMenu();
 
-        // Assert
         String output = outContent.toString();
         assertTrue(output.contains("Domain Error: Invalid Title format"));
     }

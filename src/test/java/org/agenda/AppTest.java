@@ -2,16 +2,23 @@ package org.agenda;
 
 import org.agenda.app.App;
 import org.agenda.event.controller.EventController;
+import org.agenda.event.controller.EventNotifier;
+import org.agenda.event.service.EventRecurringService;
 import org.agenda.note.controller.NoteController;
+import org.agenda.shared.config.DatabaseConnection;
 import org.agenda.task.controller.TaskController;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
+import org.mockito.MockedConstruction;
+import org.mockito.MockedStatic;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
+import java.sql.Connection;
+import java.sql.SQLException;
 import java.util.Scanner;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -69,7 +76,7 @@ class AppTest {
         @DisplayName("Option 3 shows event under development")
         void option3ShowsEventUnderDevelopment() {
             runMenuWithInput("3\n0\n");
-            assertTrue(output.toString().contains("Event module under development"));
+            verify(eventController, times(1)).showMenu();
         }
 
         @Test
@@ -77,6 +84,33 @@ class AppTest {
         void option0ExitsWithGoodbye() {
             runMenuWithInput("0\n");
             assertTrue(output.toString().contains("Goodbye!"));
+        }
+
+        @Test
+        void run_ShouldInvokeNotifierAndRecurringService() throws SQLException {
+            String input = "0\n";
+            System.setIn(new ByteArrayInputStream(input.getBytes()));
+
+            try (MockedStatic<DatabaseConnection> mockedDb = mockStatic(DatabaseConnection.class)) {
+                DatabaseConnection dbInstance = mock(DatabaseConnection.class);
+                Connection fakeConnection = mock(Connection.class);
+
+                mockedDb.when(DatabaseConnection::getInstance).thenReturn(dbInstance);
+                when(dbInstance.getConnection()).thenReturn(fakeConnection);
+
+                try (MockedConstruction<EventNotifier> notifierMocked = mockConstruction(EventNotifier.class);
+                     MockedConstruction<EventRecurringService> recurringMocked = mockConstruction(EventRecurringService.class)) {
+
+                    App.run();
+
+                    EventNotifier capturedNotifier = notifierMocked.constructed().get(0);
+                    verify(capturedNotifier, times(1)).notifyAllEvents();
+
+                    EventRecurringService capturedRecurring = recurringMocked.constructed().get(0);
+
+                    verify(capturedRecurring, timeout(1000).atLeastOnce()).processRecurringEvents();
+                }
+            }
         }
     }
 

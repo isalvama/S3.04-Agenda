@@ -10,12 +10,12 @@ CREATE TABLE event (
     id           INT UNSIGNED    AUTO_INCREMENT PRIMARY KEY,
     title        VARCHAR(100)    NOT NULL,
     body         TEXT,
-    date  		 TIMESTAMP       NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    date  		 DATETIME       NOT NULL DEFAULT CURRENT_TIMESTAMP,
     type   		 ENUM('BIRTHDATE','APPOINTMENT','REMINDER','OTHER')
                                  NOT NULL DEFAULT 'OTHER',
     schedule     ENUM('YEARLY','MONTHLY','WEEKLY','DAILY', 'HOURLY'),
-    created_at   TIMESTAMP       NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at   TIMESTAMP       NOT NULL DEFAULT CURRENT_TIMESTAMP
+    created_at   DATETIME       NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at   DATETIME       NOT NULL DEFAULT CURRENT_TIMESTAMP
                                  ON UPDATE CURRENT_TIMESTAMP,
     INDEX idx_event_date (date),
     INDEX idx_event_type (type)
@@ -28,9 +28,9 @@ CREATE TABLE task (
     status     		ENUM('PENDING','IN PROGRESS','DONE')
                                     NOT NULL DEFAULT 'PENDING',
     priority   		ENUM('HIGH','MEDIUM','LOW'),
-    expiration_date TIMESTAMP       NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    created_at      TIMESTAMP       NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at      TIMESTAMP       NOT NULL DEFAULT CURRENT_TIMESTAMP
+    expiration_date DATETIME       NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    created_at      DATETIME       NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at      DATETIME       NOT NULL DEFAULT CURRENT_TIMESTAMP
                                     ON UPDATE CURRENT_TIMESTAMP,
     event_id        INT UNSIGNED,
     CONSTRAINT fk_task_event
@@ -44,8 +44,8 @@ CREATE TABLE note (
     id         INT UNSIGNED    AUTO_INCREMENT PRIMARY KEY,
     title      VARCHAR(100)    NOT NULL,
     body       TEXT,
-    created_at TIMESTAMP       NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP       NOT NULL DEFAULT CURRENT_TIMESTAMP
+    created_at DATETIME       NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME       NOT NULL DEFAULT CURRENT_TIMESTAMP
                                ON UPDATE CURRENT_TIMESTAMP,
     task_id    INT UNSIGNED    NOT NULL,
     CONSTRAINT fk_note_task

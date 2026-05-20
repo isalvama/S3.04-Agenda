@@ -35,7 +35,7 @@ public class NoteServiceImpl implements NoteService {
 
         Note note = new Note(
                 Title.of(request.title()),
-                Description.of(request.body()),
+                request.body() != null ? Description.of(request.body()) : null,
                 LocalDateTime.now(),
                 LocalDateTime.now(),
                 request.taskId());
@@ -77,7 +77,7 @@ public class NoteServiceImpl implements NoteService {
                 .orElseThrow(() -> new NoteNotFoundException(id));
 
         note.setTitle(Title.of(request.title()));
-        note.setBody(Description.of(request.body()));
+        note.setBody( request.body() != null ? Description.of(request.body()) : null);
         note.setTaskId(request.taskId());
         note.setUpdatedAt(LocalDateTime.now());
 

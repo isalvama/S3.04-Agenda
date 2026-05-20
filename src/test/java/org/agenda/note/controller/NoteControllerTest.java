@@ -34,18 +34,22 @@ public class NoteControllerTest {
     private TaskService taskService;
     private NoteController controller;
     private ByteArrayOutputStream outputStream;
+    private Scanner scanner;
 
     @BeforeEach
     void setUp() {
         noteService = Mockito.mock(NoteService.class);
         taskService = Mockito.mock(TaskService.class);
-        controller = new NoteController(noteService, taskService);
+        scanner = new Scanner(System.in);
+        controller = new NoteController(noteService, taskService, scanner);
         outputStream = new ByteArrayOutputStream();
         System.setOut(new PrintStream(outputStream));
     }
 
     private void setInput(String input) {
-        ConsoleReader.setScanner(new Scanner(new ByteArrayInputStream(input.getBytes())));
+        scanner = new Scanner(new ByteArrayInputStream(input.getBytes()));
+        ConsoleReader.setScanner(scanner);
+        controller = new NoteController(noteService, taskService, scanner);
     }
 
     private String output() {
@@ -147,7 +151,36 @@ public class NoteControllerTest {
         @Test
         @DisplayName("update: valid input updates note and prints success message")
         void updateNoteSuccessfully() {
-            setInput("1\nUpdated title\nUpdated body\n1\n");
+            setInput("1\n1\nUpdated title\nUpdated body\n");
+            when(taskService.getAll()).thenReturn(List.of(sampleTaskResponse()));
+            when(taskService.existsById(1L)).thenReturn(true);
+            when(noteService.update(eq(1L), any())).thenReturn(sampleNoteResponse());
+
+            controller.update();
+
+            verify(noteService, times(1)).update(eq(1L), any());
+            assertTrue(output().contains("Note updated successfully"));
+        }
+
+        @Test
+        @DisplayName("create: empty body creates note with null body")
+        void createNoteWithNullBody() {
+            setInput("1\nMeeting notes\n\n");
+            when(taskService.getAll()).thenReturn(List.of(sampleTaskResponse()));
+            when(taskService.existsById(1L)).thenReturn(true);
+            when(noteService.create(any())).thenReturn(sampleNoteResponse());
+
+            controller.create();
+
+            verify(noteService, times(1)).create(any());
+            assertTrue(output().contains("Note created successfully"));
+        }
+
+        @Test
+        @DisplayName("update: empty body updates note with null body")
+        void updateNoteWithNullBody() {
+            setInput("1\n1\nUpdated title\n\n");
+            when(taskService.getAll()).thenReturn(List.of(sampleTaskResponse()));
             when(taskService.existsById(1L)).thenReturn(true);
             when(noteService.update(eq(1L), any())).thenReturn(sampleNoteResponse());
 
@@ -248,7 +281,8 @@ public class NoteControllerTest {
         @Test
         @DisplayName("update: non-existent taskId prints error and returns without updating")
         void updateWithNonExistentTaskIdPrintsError() {
-            setInput("1\nUpdated title\nUpdated body\n99\n");
+            setInput("1\n99\n");
+            when(taskService.getAll()).thenReturn(List.of(sampleTaskResponse()));
             when(taskService.existsById(99L)).thenReturn(false);
 
             controller.update();
@@ -260,7 +294,8 @@ public class NoteControllerTest {
         @Test
         @DisplayName("update: NoteNotFoundException prints 'Note not found'")
         void updateNotFoundPrintsMessage() {
-            setInput("99\nUpdated title\nUpdated body\n1\n");
+            setInput("99\n1\nUpdated title\nUpdated body\n");
+            when(taskService.getAll()).thenReturn(List.of(sampleTaskResponse()));
             when(taskService.existsById(1L)).thenReturn(true);
             when(noteService.update(eq(99L), any())).thenThrow(new NoteNotFoundException(99L));
 

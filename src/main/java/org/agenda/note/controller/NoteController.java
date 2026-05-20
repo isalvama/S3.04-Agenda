@@ -12,15 +12,18 @@ import org.agenda.task.service.TaskService;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Scanner;
 
 public class NoteController {
     private final NoteService service;
     private final TaskService taskService;
     private final Map<String, Runnable> menuActions;
+    private final Scanner scanner;
 
-    public NoteController(NoteService service, TaskService taskService) {
+    public NoteController(NoteService service, TaskService taskService, Scanner scanner) {
         this.service = service;
         this.taskService = taskService;
+        this.scanner = scanner;
         this.menuActions = new HashMap<>();
         initializeMenu();
     }
@@ -78,10 +81,7 @@ public class NoteController {
                 return;
             }
 
-            String title = ConsoleReader.readString("Title: ", 2);
-            String body = ConsoleReader.readString("Body: ", 0);
-
-            NoteRequest request = new NoteRequest(title, body, taskId);
+            NoteRequest request = collectNoteData(taskId);
             NoteResponse response = service.create(request);
 
             System.out.println("\nNote created successfully:");
@@ -149,8 +149,12 @@ public class NoteController {
         try {
             System.out.println("--- UPDATE NOTE ---");
             Long id = ConsoleReader.readLong("Note ID: ");
-            String title = ConsoleReader.readString("New Title: ", 2);
-            String body = ConsoleReader.readString("New Body: ", 0);
+
+            System.out.println("Available Tasks: ");
+            taskService.getAll().forEach(task ->
+                    System.out.printf("[#%d] %s%n", task.id(), task.title())
+            );
+
             Long taskId = ConsoleReader.readLong("Task ID: ");
 
             if (!taskService.existsById(taskId)) {
@@ -158,7 +162,7 @@ public class NoteController {
                 return;
             }
 
-            NoteRequest request = new NoteRequest(title, body, taskId);
+            NoteRequest request = collectNoteData(taskId);
             NoteResponse response = service.update(id, request);
 
             System.out.println("Note updated successfully:");
@@ -187,6 +191,14 @@ public class NoteController {
         } catch (Exception e) {
             System.out.println("Error deleting note: " + e.getMessage());
         }
+    }
+
+    private NoteRequest collectNoteData(Long taskId) {
+        String title = ConsoleReader.readString("Title: ", 2);
+        System.out.println("Body (optional, press Enter to skip): ");
+        String bodyInput = scanner.nextLine().trim();
+        String body = bodyInput.isBlank() ? null : bodyInput;
+        return new NoteRequest(title, body, taskId);
     }
 
     private void printNote(NoteResponse noteResponse) {

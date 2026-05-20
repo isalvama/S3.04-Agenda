@@ -21,7 +21,6 @@ import java.util.Scanner;
 
 import static org.agenda.shared.console.ConsoleReader.readLong;
 
-
 public class EventController {
 
     private final EventService eventService;
@@ -63,7 +62,6 @@ public class EventController {
             }
         }
     }
-
 
     public void printMenu() {
         System.out.println("\n--- EVENT MANAGEMENT ---");

@@ -8,6 +8,7 @@ import org.agenda.shared.exception.AgendaException;
 import org.agenda.shared.exception.DataAccessException;
 
 import java.sql.*;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -23,19 +24,24 @@ public class NoteRepositoryImpl implements NoteRepository{
     public Note save(Note note) {
         validateRequest(new NoteRequest(
                 note.getTitle().value(),
-                note.getBody().value(),
+                note.getBody() != null ? note.getBody().value() : null,
                 note.getTaskId()
         ));
         return (note.getId() == null) ? insert(note) : update(note);
     }
 
     public Note insert(Note note){
-        String sql = "INSERT INTO note(title, body, task_id) VALUES (?,?,?)";
+        String sql = "INSERT INTO note(title, body, task_id, created_at, updated_at) VALUES (?,?,?,?,?)";
         try (PreparedStatement ps = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
-            mapNoteToStatement(ps, note);
+            LocalDateTime now = LocalDateTime.now();
+            ps.setString(1, note.getTitle().value());
+            ps.setString(2, note.getBody() != null ? note.getBody().value() : null);
+            ps.setLong(3, note.getTaskId());
+            ps.setObject(4, now);
+            ps.setObject(5, now);
             ps.executeUpdate();
             try (ResultSet rs = ps.getGeneratedKeys()) {
-                if (rs.next()) note.setId(rs.getLong(   1));
+                if (rs.next()) note.setId(rs.getLong(1));
             }
             return note;
         } catch (SQLException e) {
@@ -47,12 +53,15 @@ public class NoteRepositoryImpl implements NoteRepository{
         validateId(note.getId());
         validateRequest(new NoteRequest(
                 note.getTitle().value(),
-                note.getBody().value(),
+                note.getBody() != null ? note.getBody().value() : null,
                 note.getTaskId()));
-        String sql = "UPDATE note SET title = ?, body = ?, task_id = ? WHERE id = ?";
+        String sql = "UPDATE note SET title = ?, body = ?, task_id = ?, updated_at = ? WHERE id = ?";
         try(PreparedStatement ps = connection.prepareStatement(sql)){
-            mapNoteToStatement(ps, note);
-            ps.setLong(4, note.getId());
+            ps.setString(1, note.getTitle().value());
+            ps.setString(2, note.getBody() != null ? note.getBody().value() : null);
+            ps.setLong(3, note.getTaskId());
+            ps.setObject(4, LocalDateTime.now());
+            ps.setLong(5, note.getId());
             ps.executeUpdate();
             return note;
         } catch (SQLException e) {
@@ -130,19 +139,17 @@ public class NoteRepositoryImpl implements NoteRepository{
         }
     }
 
-    private void mapNoteToStatement(PreparedStatement ps,  Note note) throws SQLException{
-        ps.setString(1, note.getTitle().value());
-        ps.setString(2, note.getBody().value());
-        ps.setLong(3, note.getTaskId());
-    }
 
     private Note mapRowToNote(ResultSet rs) throws SQLException{
+        String bodyRaw = rs.getString("body");
+        Description body = bodyRaw != null ? Description.of(bodyRaw) : null;
+
         return new Note(
                 rs.getLong("id"),
                 Title.of(rs.getString("title")),
-                Description.of(rs.getString("body")),
-                rs.getTimestamp("created_at").toLocalDateTime(),
-                rs.getTimestamp("updated_at").toLocalDateTime(),
+                body,
+                rs.getObject("created_at", LocalDateTime.class),
+                rs.getObject("updated_at", LocalDateTime.class),
                 rs.getLong("task_id")
         );
     }

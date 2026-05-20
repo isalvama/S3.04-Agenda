@@ -9,9 +9,11 @@ target/
 .idea/jarRepositories.xml
 .idea/compiler.xml
 .idea/libraries/
+.idea/vcs.xml
 *.iws
 *.iml
 *.ipr
+.idea/
 
 ### Eclipse ###
 .apt_generated
@@ -37,8 +39,5 @@ build/
 
 ### Mac OS ###
 .DS_Store
-
-### Variables de entorno
 .env
-# Excepción: la plantilla SÍ se commitea para que otros devs sepan qué variables necesitan
 !.env.example

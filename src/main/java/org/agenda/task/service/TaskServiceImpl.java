@@ -28,7 +28,7 @@ public class TaskServiceImpl implements TaskService {
 
         Task task = new Task(
                 Title.of(request.title()),
-                request.body() != null && !request.body().isBlank() ? Description.of(request.body()) : null,
+                toDescription(request.body()),
                 request.status(),
                 request.priority(),
                 request.expirationDate(),
@@ -75,7 +75,7 @@ public class TaskServiceImpl implements TaskService {
                 .orElseThrow(() -> new TaskNotFoundException(id));
 
         task.setTitle(Title.of(request.title()));
-        task.setBody(request.body() != null && !request.body().isBlank() ? Description.of(request.body()) : null);
+        task.setBody(toDescription(request.body()));
         task.setStatus(request.status());
         task.setPriority(request.priority());
         task.setExpirationDate(request.expirationDate());
@@ -106,7 +106,12 @@ public class TaskServiceImpl implements TaskService {
     }
 
     private Long validateId(Long id) {
+
         return Objects.requireNonNull(id, "ID cannot be null");
+    }
+
+    private Description toDescription(String value) {
+        return (value != null && !value.isBlank()) ? Description.of(value) : null;
     }
 
     @Override

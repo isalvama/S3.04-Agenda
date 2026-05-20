@@ -133,13 +133,12 @@ public class TaskRepositoryImpl implements TaskRepository {
         return new Task(
                 rs.getLong("id"),
                 Title.of(rs.getString("title")),
-                Description.of(rs.getString("body")),
+                rs.getString("body") != null ? Description.of(rs.getString("body")) : null,
                 Status.fromSqlValue(rs.getString("status")),
                 Priority.fromSqlValue(rs.getString("priority")).orElse(null),
                 rs.getTimestamp("expiration_date").toLocalDateTime(),
                 rs.getTimestamp("created_at").toLocalDateTime(),
                 rs.getTimestamp("updated_at").toLocalDateTime(),
-                // rs.getLong() returns 0 for SQL NULL - use getObject() to detect true null
                 rs.getObject("event_id") != null ? rs.getLong("event_id") : null);
     }
 }

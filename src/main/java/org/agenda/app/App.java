@@ -37,7 +37,7 @@ public class App {
             // NOTE DOMAIN
             NoteRepositoryImpl noteRepository = new NoteRepositoryImpl(connection);
             NoteServiceImpl noteService = new NoteServiceImpl(noteRepository, taskRepository);
-            NoteController noteController = new NoteController(noteService, taskService);
+            NoteController noteController = new NoteController(noteService, taskService, scanner);
 
             // EVENT DOMAIN
             EventRepository eventRepository = new EventRepositoryImpl(connection);
@@ -45,7 +45,8 @@ public class App {
             EventController eventController = new EventController(eventService, scanner);
 
             EventRecurringService eventRecurringService = new EventRecurringService(eventRepository);
-            scheduler.scheduleAtFixedRate(eventRecurringService::processRecurringEvents, 0, 1, TimeUnit.MINUTES);
+            eventRecurringService.processRecurringEvents();
+            scheduler.scheduleAtFixedRate(eventRecurringService::processRecurringEvents, 1, 1, TimeUnit.MINUTES);
 
             EventNotifier eventNotifier = new EventNotifier(eventService);
             eventNotifier.notifyAllEvents();

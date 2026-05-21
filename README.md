@@ -40,7 +40,7 @@ Each domain (task, note, event) has its own package with the same structure: `co
 
 **Singleton** — `DatabaseConnection` ensures a single shared connection across all repositories, with `synchronized` access and retry logic (5 attempts, 3-second delay) to handle Docker Compose startup timing.
 
-**Command** — Both `TaskController` and `EventController` map menu options to method references in a `Map<String, Runnable>` instead of a switch block, making the menu extensible without modifying the routing logic.
+**Command** — `TaskController`,  `EventController`, `NoteController` map menu options to method references in a `Map<String, Runnable>` instead of a switch block, making the menu extensible without modifying the routing logic.
 
 ### DTOs
 
@@ -136,82 +136,134 @@ Tests cover all three domains — service logic, repository behaviour, DTOs, val
 src/
 ├── main/java/org/agenda/
 │   ├── app/
-│   │   ├── App.java              # Wires all domains, starts scheduler + notifier
+│   │   ├── App.java                        # Wires all domains, starts scheduler + notifier
 │   │   └── Main.java
 │   ├── event/
 │   │   ├── controller/
-│   │   │   ├── EventController.java    # CLI menu (Command pattern)
-│   │   │   ├── EventFormatter.java     # Formats EventResponse for display
-│   │   │   └── EventNotifier.java      # Startup event summary (Strategy pattern)
+│   │   │   ├── EventController.java        # CLI menu (Command pattern)
+│   │   │   ├── EventFormatter.java         # Formats EventResponse for display
+│   │   │   └── EventNotifier.java          # Startup event summary (Strategy pattern)
 │   │   ├── dto/
 │   │   │   ├── CreateEventRequest.java
 │   │   │   ├── EventResponse.java
 │   │   │   └── UpdateEventRequest.java
 │   │   ├── model/
-│   │   │   ├── CalendarEvent.java      # Entity with recurrence logic
-│   │   │   ├── EventSchedule.java      # Enum: YEARLY, MONTHLY, WEEKLY, DAILY, HOURLY
-│   │   │   └── EventType.java          # Enum: BIRTHDATE, APPOINTMENT, REMINDER, OTHER
+│   │   │   ├── CalendarEvent.java          # Entity with recurrence logic
+│   │   │   ├── EventSchedule.java          # Enum: YEARLY, MONTHLY, WEEKLY, DAILY, HOURLY
+│   │   │   └── EventType.java              # Enum: BIRTHDATE, APPOINTMENT, REMINDER, OTHER
 │   │   ├── repository/
-│   │   │   ├── EventRepository.java
-│   │   │   ├── EventRepositoryImpl.java
 │   │   │   ├── EventDataAccessConnection.java
 │   │   │   ├── EventNotFoundException.java
 │   │   │   ├── EventNotSavedException.java
-│   │   │   └── EventNotUpdatedException.java
+│   │   │   ├── EventNotUpdatedException.java
+│   │   │   ├── EventRepository.java
+│   │   │   └── EventRepositoryImpl.java
 │   │   └── service/
 │   │       ├── strategy/
-│   │       │   ├── ListEventsStrategy.java         # Interface
-│   │       │   ├── TodayEventsStrategy.java
 │   │       │   ├── LastTwoDaysEventsStrategy.java
-│   │       │   └── NextSevenDaysEventsStrategy.java
+│   │       │   ├── ListEventsStrategy.java  # Interface
+│   │       │   ├── NextSevenDaysEventsStrategy.java
+│   │       │   └── TodayEventsStrategy.java
+│   │       ├── EventRecurringService.java   # Auto-schedules next occurrence of past recurring events
+│   │       ├── EventResponseMapper.java
 │   │       ├── EventService.java
-│   │       ├── EventServiceImpl.java
-│   │       ├── EventRecurringService.java  # Auto-schedules next occurrence of past recurring events
-│   │       └── EventResponseMapper.java
+│   │       └── EventServiceImpl.java
 │   ├── note/
-│   │   ├── controller/         # NoteController
-│   │   ├── dto/                # NoteRequest, NoteResponse
-│   │   ├── exception/          # NoteNotFoundException
-│   │   ├── model/              # Note
-│   │   ├── repository/         # NoteRepository, NoteRepositoryImpl
+│   │   ├── controller/
+│   │   │   └── NoteController.java         # CLI menu (Command pattern)
+│   │   ├── dto/
+│   │   │   ├── NoteRequest.java
+│   │   │   └── NoteResponse.java
+│   │   ├── exception/
+│   │   │   └── NoteNotFoundException.java
+│   │   ├── model/
+│   │   │   └── Note.java
+│   │   ├── repository/
+│   │   │   ├── NoteRepository.java
+│   │   │   └── NoteRepositoryImpl.java
 │   │   └── service/
-│   │       ├── strategy/       # NoteStrategy, GetAllNotesStrategy, GetAllByTaskIdStrategy
+│   │       ├── strategy/
+│   │       │   ├── GetAllByTaskIdStrategy.java
+│   │       │   ├── GetAllNotesStrategy.java
+│   │       │   └── NoteStrategy.java        # Interface
 │   │       ├── NoteService.java
 │   │       └── NoteServiceImpl.java
 │   ├── shared/
-│   │   ├── config/             # DatabaseConnection (Singleton)
-│   │   ├── console/            # ConsoleReader, InvalidInputTypeException
+│   │   ├── config/
+│   │   │   └── DatabaseConnection.java      # Singleton
+│   │   ├── console/
+│   │   │   ├── ConsoleReader.java
+│   │   │   └── InvalidInputTypeException.java
 │   │   ├── domain/
-│   │   │   ├── exception/      # DomainException, InvalidTitleException,
-│   │   │   │                   # InvalidDescriptionException
-│   │   │   └── value_object/   # Title, Description
-│   │   └── exception/          # AgendaException, DataAccessException
+│   │   │   ├── exception/
+│   │   │   │   ├── DomainException.java
+│   │   │   │   ├── InvalidDescriptionException.java
+│   │   │   │   └── InvalidTitleException.java
+│   │   │   └── value_object/
+│   │   │       ├── Description.java
+│   │   │       └── Title.java
+│   │   └── exception/
+│   │       ├── AgendaException.java
+│   │       └── DataAccessException.java
 │   └── task/
-│       ├── controller/         # TaskController (Command pattern)
-│       ├── dto/                # TaskRequest, TaskResponse (records)
-│       ├── exception/          # TaskNotFoundException, TaskValidationException
-│       ├── model/              # Task, Status, Priority
-│       ├── repository/         # TaskRepository, TaskRepositoryImpl
+│       ├── controller/
+│       │   └── TaskController.java          # CLI menu (Command pattern)
+│       ├── dto/
+│       │   ├── TaskRequest.java
+│       │   └── TaskResponse.java
+│       ├── exception/
+│       │   ├── TaskNotFoundException.java
+│       │   └── TaskValidationException.java
+│       ├── model/
+│       │   ├── Priority.java                # Enum: HIGH, MEDIUM, LOW
+│       │   ├── Status.java                  # Enum: PENDING, IN_PROGRESS, DONE
+│       │   └── Task.java
+│       ├── repository/
+│       │   ├── TaskRepository.java
+│       │   └── TaskRepositoryImpl.java
 │       └── service/
-│           ├── strategy/       # TaskStrategy, ListAllStrategy, ListPendingStrategy,
-│           │                   # ListCompletedStrategy
+│           ├── strategy/
+│           │   ├── ListAllStrategy.java
+│           │   ├── ListCompletedStrategy.java
+│           │   ├── ListPendingStrategy.java
+│           │   └── TaskStrategy.java        # Interface
 │           ├── TaskService.java
 │           └── TaskServiceImpl.java
 ├── test/java/org/agenda/
 │   ├── event/
-│   │   ├── controller/         # EventControllerTest, EventFormatterTest, EventNotifierTest
-│   │   ├── model/              # CalendarEventTest
-│   │   ├── repository/         # MySQLEventRepositoryTest
-│   │   └── service/            # EventServiceImplTest, EventRecurringServiceTest,
-│   │                           # EventResponseMapperTest, strategy/
+│   │   ├── controller/
+│   │   │   ├── EventControllerTest.java
+│   │   │   ├── EventFormatterTest.java
+│   │   │   └── EventNotifierTest.java
+│   │   ├── model/
+│   │   │   └── CalendarEventTest.java
+│   │   ├── repository/
+│   │   │   └── MySQLEventRepositoryTest.java
+│   │   └── service/
+│   │       ├── strategy/
+│   │       │   ├── LastTwoDaysEventsStrategyTest.java
+│   │       │   ├── NextSevenDaysEventsStrategyTest.java
+│   │       │   └── TodayEventsStrategyTest.java
+│   │       ├── EventRecurringServiceTest.java
+│   │       ├── EventResponseMapperTest.java
+│   │       └── EventServiceImplTest.java
 │   ├── note/
-│   │   ├── controller/         # NoteControllerTest
-│   │   ├── repository/         # NoteRepositoryTest
-│   │   └── service/            # NoteServiceTest
+│   │   ├── controller/
+│   │   │   └── NoteControllerTest.java
+│   │   ├── repository/
+│   │   │   └── NoteRepositoryTest.java
+│   │   └── service/
+│   │       └── NoteServiceTest.java
 │   ├── shared/
-│   │   ├── console/            # ConsoleReaderTest
-│   │   └── domain/value_object/ # TitleTest, DescriptionTest
-│   ├── task/service/           # TaskServiceTest
+│   │   ├── console/
+│   │   │   └── ConsoleReaderTest.java
+│   │   └── domain/
+│   │       └── value_object/
+│   │           ├── DescriptionTest.java
+│   │           └── TitleTest.java
+│   ├── task/
+│   │   └── service/
+│   │       └── TaskServiceTest.java
 │   └── AppTest.java
 sql/
 ├── init.sql
